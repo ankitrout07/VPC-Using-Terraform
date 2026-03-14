@@ -1,9 +1,9 @@
 # variables.tf
 
 variable "location" {
-  description = "Target location for deployment"
+  description = "The Azure region to deploy to"
   type        = string
-  default     = "East US"
+  default     = "East US" # Use East US or West Europe
 }
 
 variable "vnet_address_space" {
@@ -36,10 +36,16 @@ variable "admin_username" {
 }
 
 variable "admin_password" {
-  description = "Password for VMs and DB (sensitive)"
+  description = "Password for VMs (sensitive)"
   type        = string
   sensitive   = true
   default     = "ChangeMe123!" # In production, use Key Vault
+}
+
+variable "db_password" {
+  description = "Password for the database administrator"
+  type        = string
+  sensitive   = true
 }
 
 variable "ssh_allowed_source" {

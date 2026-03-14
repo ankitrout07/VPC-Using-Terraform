@@ -23,7 +23,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   delegated_subnet_id    = azurerm_subnet.db[0].id # Delegated subnet required
   private_dns_zone_id    = azurerm_private_dns_zone.db_zone.id
   administrator_login    = var.admin_username
-  administrator_password = var.admin_password
+  administrator_password = var.db_password
   zone                   = "1" # Use an availability zone
   storage_mb             = 32768 # 32 GB
 
