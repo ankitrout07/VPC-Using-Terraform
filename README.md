@@ -25,22 +25,35 @@ This project implements a secure, highly-available 3-tier architecture:
 ## Prerequisites
 - Terraform >= 1.0
 - AWS CLI configured
-- Azure Storage Account (for remote state) or update `provider.tf` for local state.
+- Azure CLI configured and authenticated (`az login`)
 
 ## Setup
-1.  Initialize Terraform:
-    ```bash
-    terraform init
-    ```
-2.  Validate configuration:
-    ```bash
-    terraform validate
-    ```
-3.  Plan deployment:
-    ```bash
-    terraform plan
-    ```
-4.  Apply changes:
-    ```bash
-    terraform apply
-    ```
+
+### Step 1: Bootstrap Azure Backend
+This creates the Azure Resource Group, Storage Account, and Container to hold the Terraform state for the AWS infrastructure.
+
+1. Navigate to the `backend-init/` directory:
+   ```bash
+   cd backend-init
+   ```
+2. Initialize and deploy the backend:
+   ```bash
+   terraform init
+   terraform apply
+   ```
+3. Take note of the `storage_account_name` value output by Terraform. You will need to plug this into the provider config in Step 2.
+
+### Step 2: Deploy Fortress VPC (AWS)
+This deploys the actual AWS infrastructure (VPC, Subnets, EC2, RDS) using the Azure state bucket.
+
+1. Navigate to the `networking/` directory:
+   ```bash
+   cd ../networking
+   ```
+2. Update `provider.tf` and replace `<YOUR_AZURE_STORAGE_ACCOUNT_NAME>` with the output from Step 1.
+3. Fill in values for `terraform.tfvars`.
+4. Run Terraform to deploy the infrastructure:
+   ```bash
+   terraform init
+   terraform apply
+   ```
