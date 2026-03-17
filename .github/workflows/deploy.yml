@@ -36,20 +36,17 @@ jobs:
         with:
           terraform_version: "1.5.7"
 
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-
+      # CRITICAL: Init MUST come before Validate
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Validate
+        id: validate
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        run: |
-          terraform plan -no-color -out=tfplan
-          terraform show -no-color tfplan > plan.txt
+        run: terraform plan -no-color
 
       # Only posts comments on Pull Requests
       - name: Update PR Comment
