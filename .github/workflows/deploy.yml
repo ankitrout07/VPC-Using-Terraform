@@ -9,7 +9,7 @@ on:
     paths: ['networking/**']
 
 env:
-  # Opt-in to Node 24 to stay ahead of the June 2nd deprecation
+  # Senior DevOps Fix: Opt-in to Node 24 and silence deprecation warnings
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
   ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -18,7 +18,7 @@ env:
 
 jobs:
   terraform:
-    name: 'Fortress Deployment'
+    name: 'Terraform'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,41 +36,23 @@ jobs:
         with:
           terraform_version: "1.5.7"
 
-      # CRITICAL: Init MUST come before Validate
+      # STEP 1: Initialize (This downloads azurerm 3.117.1 to the runner)
       - name: Terraform Init
         run: terraform init
 
+      # STEP 2: Validate (Now the runner has the provider schema)
       - name: Terraform Validate
         id: validate
         run: terraform validate
 
+      # STEP 3: Plan
       - name: Terraform Plan
         id: plan
         run: |
           terraform plan -no-color -out=tfplan
           terraform show -no-color tfplan > plan.txt
 
-      # Only posts comments on Pull Requests
-      - name: Update PR Comment
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync('plan.txt', 'utf8');
-            const body = `#### Terraform Plan for Fortress-VNet 🛡️
-            <details><summary>Show Detailed Plan</summary>
-            \`\`\`\n${plan}\n\`\`\`
-            </details>`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            })
-
-      # Only runs when code is merged into the main branch
+      # STEP 4: Apply (Only on merge to main)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
