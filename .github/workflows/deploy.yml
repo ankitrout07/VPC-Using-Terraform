@@ -1,5 +1,10 @@
 name: Terraform-Infra-Pipeline
 
+# Note: GitHub is deprecating Node.js 20 in favor of Node.js 24 (effective June 2, 2026)
+# Some actions may show Node.js 20 warnings until their maintainers release updates.
+# This workflow will continue to work normally - no action needed.
+# Reference: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
 on:
   push:
     branches: [ main ]
@@ -17,12 +22,14 @@ jobs:
     defaults:
       run:
         working-directory: ./networking
+    permissions:
+      contents: read
+      pull-requests: write
     env:
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout Code
