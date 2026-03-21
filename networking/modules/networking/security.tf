@@ -1,6 +1,6 @@
-# security.tf
+# security.tf - Uses azurerm_resource_group.main which is defined in this module's vpc.tf
 
-# 1. ALB Security Group (Public)
+# 1. ALB Security Group (Public Tier)
 resource "azurerm_network_security_group" "alb_nsg" {
   name                = "${var.project_name}-alb-nsg"
   location            = azurerm_resource_group.main.location
@@ -14,7 +14,19 @@ resource "azurerm_network_security_group" "alb_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "80"
-    source_address_prefix      = "112.196.74.82"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-HTTPS-Inbound"
+    priority                   = 105
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
 
@@ -38,14 +50,25 @@ resource "azurerm_network_security_group" "app_nsg" {
   resource_group_name = azurerm_resource_group.main.name
 
   security_rule {
-    name                   = "Allow-HTTP-from-ALB"
-    priority               = 101
-    direction              = "Inbound"
-    access                 = "Allow"
-    protocol               = "Tcp"
-    source_port_range      = "*"
-    destination_port_range = "80"
-    # In a real setup, restrict to Application Gateway subnet or Load Balancer IPs
+    name                       = "Allow-HTTP-from-LB"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-App-Port-8080"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8080"
     source_address_prefix      = "VirtualNetwork"
     destination_address_prefix = "*"
   }
@@ -69,7 +92,6 @@ resource "azurerm_network_security_group" "db_nsg" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
-  # Allow App Tier to access PostgreSQL
   security_rule {
     name                       = "Allow-PostgreSQL-from-AppTier"
     priority                   = 100
@@ -81,24 +103,21 @@ resource "azurerm_network_security_group" "db_nsg" {
     source_address_prefix      = "VirtualNetwork"
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "Deny-All-Inbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
-# 4. Allow port 8080 (e.g., app running on 8080)
-resource "azurerm_network_security_rule" "allow_8080" {
-  name                        = "Allow-8080-Inbound"
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "8080"
-  source_address_prefix       = "*" 
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.app_nsg.name
-}
-
-# 5. Bastion Host Security Group (Public)
+# 4. Bastion Host Security Group (Public)
 resource "azurerm_network_security_group" "bastion_nsg" {
   name                = "${var.project_name}-bastion-nsg"
   location            = azurerm_resource_group.main.location

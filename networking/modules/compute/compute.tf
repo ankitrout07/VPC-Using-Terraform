@@ -3,16 +3,16 @@
 # 1. Standard Public Load Balancer
 resource "azurerm_public_ip" "lb_pip" {
   name                = "${var.project_name}-lb-pip"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 
 resource "azurerm_lb" "main" {
   name                = "${var.project_name}-lb"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   sku                 = "Standard"
 
   frontend_ip_configuration {
@@ -45,18 +45,18 @@ resource "azurerm_lb_rule" "http" {
   probe_id                       = azurerm_lb_probe.http_probe.id
 }
 
-# 2. Virtual Machine Scale Set (replaces ASG and Launch Template)
+# 2. Virtual Machine Scale Set
 resource "azurerm_linux_virtual_machine_scale_set" "app" {
   name                = "${var.project_name}-vmss"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = var.resource_group_name
+  location            = var.location
   sku                 = var.vm_size
-  instances           = 1
+  instances           = 2
   admin_username      = var.admin_username
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa.pub") # Requires a local SSH key
+    public_key = file("~/.ssh/id_rsa.pub")
   }
 
   source_image_reference {
@@ -78,31 +78,32 @@ resource "azurerm_linux_virtual_machine_scale_set" "app" {
     ip_configuration {
       name                                   = "internal"
       primary                                = true
-      subnet_id                              = azurerm_subnet.app[0].id
+      subnet_id                              = var.app_subnet_ids[0]
       load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.app_pool.id]
     }
   }
 
+  # Resolved relative to module directory — init.sh must live in modules/compute/
   custom_data = filebase64("${path.module}/init.sh")
 }
 
-# 3. Bastion Host (Simulated using a VM with a Public IP, can also use Azure Bastion Service)
+# 3. Bastion Host (Public VM for SSH jump access to private tier)
 resource "azurerm_public_ip" "bastion_pip" {
   name                = "${var.project_name}-bastion-pip"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 
 resource "azurerm_network_interface" "bastion_nic" {
   name                = "${var.project_name}-bastion-nic"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.public[0].id
+    subnet_id                     = var.public_subnet_ids[0]
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.bastion_pip.id
   }
@@ -110,9 +111,9 @@ resource "azurerm_network_interface" "bastion_nic" {
 
 resource "azurerm_linux_virtual_machine" "bastion" {
   name                = "${var.project_name}-bastion"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  size                = "Standard_D2s_v3"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  size                = "Standard_B1s" # Cost-optimized bastion (1 vCPU, 1 GB RAM)
   admin_username      = var.admin_username
 
   network_interface_ids = [

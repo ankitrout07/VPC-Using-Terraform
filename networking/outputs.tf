@@ -4,20 +4,21 @@ output "vnet_name" {
 }
 
 output "lb_public_ip" {
-  description = "Public IP of the Load Balancer"
-  value       = module.networking.lb_public_ip
-}
-
-output "db_server_fqdn" {
-  description = "FQDN of the PostgreSQL Server"
-  value       = module.database.db_server_fqdn
+  description = "Public IP of the Load Balancer — paste into your browser"
+  value       = module.compute.lb_public_ip
 }
 
 output "bastion_public_ip" {
-  description = "Public IP for Bastion access"
-  value       = module.networking.bastion_public_ip
+  description = "Public IP for SSH access: ssh adminuser@<bastion_public_ip>"
+  value       = module.compute.bastion_public_ip
+}
+
+output "db_server_fqdn" {
+  description = "FQDN of the PostgreSQL Flexible Server (resolve inside VNet only)"
+  value       = module.database.db_server_fqdn
 }
 
 output "app_subnet_ids" {
-  value = module.networking.app_subnet_ids
+  description = "IDs of the private App tier subnets"
+  value       = module.networking.app_subnet_ids
 }

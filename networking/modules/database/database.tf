@@ -1,58 +1,73 @@
-# database.tf
+# database.tf - Rewritten to use Azure PostgreSQL Flexible Server
 
-resource "random_string" "sql_suffix" {
+resource "random_string" "db_suffix" {
   length  = 6
   special = false
   upper   = false
 }
 
-# 1. Azure SQL Server
-resource "azurerm_mssql_server" "sql" {
-  name                         = "${lower(var.project_name)}-sql-srv-${random_string.sql_suffix.result}"
-  resource_group_name          = azurerm_resource_group.main.name
-  location                     = azurerm_resource_group.main.location
-  version                      = "12.0"
-  administrator_login          = var.admin_username
-  administrator_login_password = var.db_password
+# 1. Dedicated delegation subnet for PostgreSQL Flexible Server
+#    (Flexible Server requires its own /28+ delegated subnet — not shared)
+resource "azurerm_subnet" "postgres_delegated" {
+  name                 = "${var.project_name}-pg-delegated-subnet"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = data.azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.30.0/24"]
+
+  delegation {
+    name = "postgres-delegation"
+    service_delegation {
+      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
 }
 
-# 2. Azure SQL Database
-resource "azurerm_mssql_database" "db" {
+# Reference the VNet from outputs provided via variable
+data "azurerm_virtual_network" "main" {
+  name                = split("/", var.vnet_id)[8]
+  resource_group_name = var.resource_group_name
+}
+
+# 2. Private DNS Zone for PostgreSQL Flexible Server
+resource "azurerm_private_dns_zone" "postgres" {
+  name                = "${lower(var.project_name)}-${random_string.db_suffix.result}.private.postgres.database.azure.com"
+  resource_group_name = var.resource_group_name
+}
+
+# 3. Link the Private DNS Zone to the VNet
+resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
+  name                  = "${var.project_name}-pg-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.postgres.name
+  virtual_network_id    = var.vnet_id
+  registration_enabled  = false
+}
+
+# 4. PostgreSQL Flexible Server (replaces old MSSQL)
+resource "azurerm_postgresql_flexible_server" "db" {
+  name                   = "${lower(var.project_name)}-pg-${random_string.db_suffix.result}"
+  resource_group_name    = var.resource_group_name
+  location               = var.location
+  version                = "15"
+  delegated_subnet_id    = azurerm_subnet.postgres_delegated.id
+  private_dns_zone_id    = azurerm_private_dns_zone.postgres.id
+  administrator_login    = var.admin_username
+  administrator_password = var.db_password
+
+  storage_mb   = 32768
+  sku_name     = "B_Standard_B1ms" # Cost-efficient: 1 vCore, 2GB RAM
+
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
+}
+
+# 5. PostgreSQL Database
+resource "azurerm_postgresql_flexible_server_database" "main" {
   name      = var.db_name
-  server_id = azurerm_mssql_server.sql.id
-  sku_name  = "S0"
-}
-
-# 3. Private Endpoint for SQL Database
-resource "azurerm_private_endpoint" "sql_pe" {
-  name                = "${var.project_name}-sql-pe"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  subnet_id           = azurerm_subnet.db[0].id
-
-  private_service_connection {
-    name                           = "${var.project_name}-sql-psc"
-    private_connection_resource_id = azurerm_mssql_server.sql.id
-    subresource_names              = ["sqlServer"]
-    is_manual_connection           = false
-  }
-
-  private_dns_zone_group {
-    name                 = "default"
-    private_dns_zone_ids = [azurerm_private_dns_zone.sql_zone.id]
-  }
-}
-
-# 4. Private DNS Zone for Azure SQL
-resource "azurerm_private_dns_zone" "sql_zone" {
-  name                = "privatelink.database.windows.net"
-  resource_group_name = azurerm_resource_group.main.name
-}
-
-# 5. Virtual Network Link for DNS Zone
-resource "azurerm_private_dns_zone_virtual_network_link" "sql_zone_link" {
-  name                  = "${var.project_name}-sql-vnet-link"
-  private_dns_zone_name = azurerm_private_dns_zone.sql_zone.name
-  virtual_network_id    = azurerm_virtual_network.main.id
-  resource_group_name   = azurerm_resource_group.main.name
+  server_id = azurerm_postgresql_flexible_server.db.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
 }
