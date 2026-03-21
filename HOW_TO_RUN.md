@@ -184,6 +184,7 @@ Internet
 
 ---
 
+
 ## Common Issues
 
 | Problem | Fix |
@@ -193,3 +194,63 @@ Internet
 | VM not serving webpage after apply | Wait 2–3 min for cloud-init to complete |
 | `Backend config changed` error on re-init | Run `rm -rf .terraform` then `terraform init` again |
 | PostgreSQL subnet delegation error | Ensure `10.0.30.0/24` doesn't overlap with existing VNet ranges |
+
+---
+
+## CI/CD — GitHub Actions Workflow
+
+The workflow at `.github/workflows/deploy.yml` automatically runs `terraform plan` on every PR and `terraform apply` on every merge to `main`. Follow these steps once to activate it.
+
+### Step 1 — Create an Azure Service Principal
+
+This gives GitHub Actions permission to deploy to Azure:
+
+```bash
+az ad sp create-for-rbac \
+  --name "fortress-vnet-github" \
+  --role Contributor \
+  --scopes /subscriptions/<your-subscription-id>
+```
+
+Note the output — you'll need `clientId`, `clientSecret`, `subscriptionId`, and `tenantId`.
+
+### Step 2 — Add GitHub Secrets
+
+Go to your GitHub repo → **Settings → Secrets and variables → Actions → New repository secret** and add all 5:
+
+| Secret Name | Value |
+|---|---|
+| `AZURE_CLIENT_ID` | `clientId` from SP output |
+| `AZURE_CLIENT_SECRET` | `clientSecret` from SP output |
+| `AZURE_SUBSCRIPTION_ID` | Your Azure subscription ID |
+| `AZURE_TENANT_ID` | `tenantId` from SP output |
+| `TF_DB_PASSWORD` | Your database password |
+
+### Step 3 — Enable the Remote Backend
+
+Open `networking/provider.tf`, uncomment the backend block and fill in your storage account name (from `backend-init` output in Step 2 above):
+
+```hcl
+backend "azurerm" {
+  resource_group_name  = "rg-terraform-mgmt-prod"
+  storage_account_name = "<your-storage-account-name>"
+  container_name       = "tfstate"
+  key                  = "networking-azure.terraform.tfstate"
+}
+```
+
+### Step 4 — Push to GitHub
+
+```bash
+git add .
+git commit -m "feat: complete fortress-vnet infrastructure"
+git push origin main
+```
+
+### How the Workflow Behaves
+
+| Event | What Happens |
+|---|---|
+| Open a Pull Request | Runs `validate` + `plan`, posts full plan output as a PR comment |
+| Merge PR to `main` | Runs `validate` + `plan` + `apply` automatically |
+| Push directly to `main` | Same as merge — full apply runs |
