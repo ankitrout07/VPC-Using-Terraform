@@ -113,7 +113,7 @@ resource "azurerm_linux_virtual_machine" "bastion" {
   name                = "${var.project_name}-bastion"
   resource_group_name = var.resource_group_name
   location            = var.location
-  size                = "Standard_B1s" # Cost-optimized bastion (1 vCPU, 1 GB RAM)
+  size                = "Standard_B2s" # Cost-optimized bastion, using B2s to avoid B1s capacity limits
   admin_username      = var.admin_username
 
   network_interface_ids = [
