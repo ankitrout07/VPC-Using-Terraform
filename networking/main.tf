@@ -22,6 +22,12 @@ module "aks" {
 }
 
 # ── Database module ────────────────────────────────────────────────────────────
+resource "random_password" "db_password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 module "database" {
   source = "./modules/database"
 
@@ -30,7 +36,7 @@ module "database" {
   resource_group_name = module.networking.resource_group_name
   db_name             = var.db_name
   admin_username      = var.admin_username
-  db_password         = var.db_password
+  db_password         = random_password.db_password.result
   db_subnet_ids       = module.networking.db_subnet_ids
   vnet_id             = module.networking.vnet_id
 }
