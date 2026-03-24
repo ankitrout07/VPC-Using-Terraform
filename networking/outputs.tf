@@ -3,9 +3,19 @@ output "vnet_name" {
   value       = module.networking.vnet_name
 }
 
-output "lb_public_ip" {
-  description = "Public IP of the Load Balancer — paste into your browser"
-  value       = module.compute.lb_public_ip
+output "aks_cluster_name" {
+  description = "Name of the Azure Kubernetes Service cluster"
+  value       = module.aks.cluster_name
+}
+
+output "app_gateway_public_ip" {
+  description = "Public IP of the Application Gateway"
+  value       = module.app_gateway.public_ip
+}
+
+output "acr_login_server" {
+  description = "The login server for the Azure Container Registry"
+  value       = module.acr.login_server
 }
 
 

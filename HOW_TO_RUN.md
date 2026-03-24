@@ -7,6 +7,7 @@ Make sure you have these installed:
 ```bash
 terraform --version   # needs to be >= 1.0
 az --version          # Azure CLI
+kubectl version       # Kubernetes CLI
 ls ~/.ssh/id_rsa.pub  # SSH key
 ```
 
@@ -48,36 +49,38 @@ terraform init
 terraform apply -var="db_password=YourPassword123!"
 ```
 
-Type `yes`. This takes about **5–8 minutes**.
+Type `yes`. This takes about **10–15 minutes** (AKS and Application Gateway deployment).
 
 ---
 
-## Step 4 — Open the Webpage
+## Step 4 — Verify the Cluster and Gateway
 
 When it finishes you'll see something like:
-
 ```
-lb_public_ip      = "20.x.x.x"
-bastion_public_ip = "20.y.y.y"
-db_server_fqdn    = "fortress-pg-xxx.private.postgres.database.azure.com"
-```
-
-Open your browser and go to:
-```
-http://<lb_public_ip>
+aks_cluster_name      = "Fortress-VNet-aks"
+app_gateway_public_ip = "20.x.x.x"
+acr_login_server      = "fortressvnetacrxxxx.azurecr.io"
+db_server_fqdn        = "fortress-pg-xxx.private.postgres.database.azure.com"
 ```
 
-You'll see the Fortress VNet dashboard. It may take **2–3 minutes** for the VMs to fully boot.
+### Accessing the Cluster
+Since the cluster is **Private**, you cannot reach it directly from the internet. You must:
+1. Deploy a **Bastion Host** (uncommented in `compute.tf` - *coming soon*) or
+2. Use a **VPN/Site-to-Site** connection.
+
+### Accessing the Web App
+Once you've deployed an ingress/service to AKS, you can reach it via:
+```
+http://<app_gateway_public_ip>
+```
+Note: It may take **5 minutes** for the Application Gateway to finish its initial provisioning.
 
 ---
 
-## SSH into the Bastion
-
+## Authenticate to ACR
 ```bash
-ssh adminuser@<bastion_public_ip>
+az acr login --name <acr_name>
 ```
-
-From the Bastion, you can then SSH into private app VMs.
 
 ---
 
@@ -112,7 +115,8 @@ Type `yes` at each prompt.
 |---------|-----|
 | `No subscription found` | Run `az login` again |
 | `ssh-key not found` | Run `ssh-keygen -t rsa -b 4096` |
-| Webpage not loading | Wait 2–3 min after deploy, VMs are still booting |
+| Gateway error 502/404 | Initial provisioning can take up to 10 minutes |
+| `kubectl` not connecting | Ensure you are connected to the VNet (private cluster) |
 | `Backend config changed` | Run `rm -rf .terraform` then `terraform init` again |
 
 ---

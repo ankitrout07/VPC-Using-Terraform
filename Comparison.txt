@@ -23,27 +23,31 @@ The following items from the diagram are NOT yet built or are implemented differ
 Diagram: Uses a Private AKS Cluster (Azure Kubernetes Service).
 Current project: Uses a Virtual Machine Scale Set (VMSS) with a single Ubuntu instance.
 Action Required: Move from VMs to AKS if you want to match the diagram.
+
 2. Traffic Management & Edge
 Application Gateway + WAF: The diagram uses this as the entry point for Layer 7 load balancing and security. The project currently uses a basic Standard Public Load Balancer.
 Azure CDN: Missing from the project.
 Internal Load Balancer: Missing (usually part of the AKS setup).
+
 3. Integrated PaaS Services
 Azure Container Registry (ACR): Missing (needed to store Docker images for AKS).
 Azure Cache for Redis: Missing (used for session/data caching).
 Azure Service Bus: Missing (used for messaging/decoupling).
 Key Vault: Missing (security best practice for secrets/certs shown in the diagram).
 Azure File Share: Missing (for persistent volumes).
+
 4. High Availability & Disaster Recovery
 Zone Redundancy: The diagram shows SQL Server in Availability Zone 1 (Primary) and Zone 2 (Standby). The current project uses a single Flexible Server instance.
 NAT Gateway: Explicitly shown in the diagram for outbound traffic; sometimes managed automatically but missing as a separate resource in the project.
+
 5. Governance & Monitoring
 Operations Suite: Missing Log Analytics Workspace, Azure Monitor, and Alerts.
 Governance Tools: Defender for Cloud, Policy, and Cost Management are shown as part of the management framework.
+
 🚀 Recommendation: What to Build Next
 To bridge the gap and move toward the architecture diagram, I recommend these steps in order:
 
-Switch to AKS: Replace the VMSS module with an AKS module.
+
 Add Shared Services: Deploy ACR, Key Vault, and Redis.
-Upgrade Edge Security: Replace the Public Load Balancer with an Application Gateway.
 Implement Observability: Setup Log Analytics and link it to the resources.
 Enable HA: Configure the PostgreSQL Flexible Server for High Availability (Zone Redundant).

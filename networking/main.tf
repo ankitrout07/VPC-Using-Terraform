@@ -10,18 +10,15 @@ module "networking" {
   ssh_allowed_source = var.ssh_allowed_source
 }
 
-# ── Compute module ─────────────────────────────────────────────────────────────
-module "compute" {
-  source = "./modules/compute"
+# ── AKS module (Replaces VMSS) ──────────────────────────────────────────────────
+module "aks" {
+  source = "./modules/aks"
 
   project_name        = var.project_name
   location            = var.location
   resource_group_name = module.networking.resource_group_name
-  vm_size             = var.vm_size
-  admin_username      = var.admin_username
-  app_subnet_ids      = module.networking.app_subnet_ids
-  public_subnet_ids   = module.networking.public_subnet_ids
-  ssh_allowed_source  = var.ssh_allowed_source
+  node_vm_size        = var.vm_size
+  vnet_subnet_id      = module.networking.app_subnet_ids[0]
 }
 
 # ── Database module ────────────────────────────────────────────────────────────
@@ -36,4 +33,31 @@ module "database" {
   db_password         = var.db_password
   db_subnet_ids       = module.networking.db_subnet_ids
   vnet_id             = module.networking.vnet_id
+}
+
+# ── Application Gateway module ─────────────────────────────────────────────────
+module "app_gateway" {
+  source = "./modules/app_gateway"
+
+  project_name        = var.project_name
+  location            = var.location
+  resource_group_name = module.networking.resource_group_name
+  subnet_id           = module.networking.gateway_subnet_id
+}
+
+# ── ACR module ─────────────────────────────────────────────────────────────────
+module "acr" {
+  source = "./modules/acr"
+
+  project_name        = var.project_name
+  location            = var.location
+  resource_group_name = module.networking.resource_group_name
+}
+
+# Grant AKS pull permission from ACR
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  principal_id                     = module.aks.principal_id
+  role_definition_name             = "AcrPull"
+  scope                            = module.acr.acr_id
+  skip_service_principal_aad_check = true
 }

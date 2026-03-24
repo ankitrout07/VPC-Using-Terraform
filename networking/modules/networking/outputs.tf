@@ -25,6 +25,16 @@ output "db_subnet_ids" {
   value       = azurerm_subnet.db[*].id
 }
 
+output "gateway_subnet_id" {
+  description = "ID of the Application Gateway (Tier 4) subnet"
+  value       = azurerm_subnet.gateway.id
+}
+
+output "gateway_subnet_id" {
+  description = "ID of the Application Gateway (Tier 4) subnet"
+  value       = azurerm_subnet.gateway.id
+}
+
 output "resource_group_name" {
   description = "Name of the shared resource group"
   value       = azurerm_resource_group.main.name

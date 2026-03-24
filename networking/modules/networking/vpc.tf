@@ -38,3 +38,11 @@ resource "azurerm_subnet" "db" {
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, count.index + 20)]
 }
+
+# --- TIER 4: GATEWAY ---
+resource "azurerm_subnet" "gateway" {
+  name                 = "${var.project_name}-gateway-subnet"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 40)] # 10.0.40.0/24
+}

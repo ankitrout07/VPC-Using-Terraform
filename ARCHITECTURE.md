@@ -4,11 +4,11 @@ When you run `terraform apply`, it creates this on Azure:
 ```
 Internet
    ↓
-Load Balancer  ←  Bastion Host (for SSH)
+Application Gateway (WAF-ready)
    ↓
-App VMs (2x Ubuntu + Nginx webpage)
+Private AKS Cluster (K8s)
    ↓
-PostgreSQL Database (private, no internet access)
+PostgreSQL Database (private)
 ```
 
 Everything lives inside a Virtual Network (VNet) — a private isolated network on Azure.
@@ -20,13 +20,15 @@ Everything lives inside a Virtual Network (VNet) — a private isolated network 
 ```
 backend-init/        → Step 1: creates storage for Terraform state
 networking/          → Step 2: the actual infrastructure
-  main.tf            → calls the 3 modules below
+  main.tf            → calls the modules below
   variables.tf       → all the config options
   terraform.tfvars   → your actual values (gitignored)
   outputs.tf         → prints IPs after deploy
   modules/
-    networking/      → VNet, subnets, firewalls, NAT
-    compute/         → Load Balancer, VMs, Bastion, webpage
+    networking/      → VNet, subnets, firewalls
+    aks/             → Private Kubernetes Cluster
+    app_gateway/     → Edge Security & Layer 7 Load Balancing
+    acr/             → Container Image Registry
     database/        → PostgreSQL server
 .github/workflows/   → automatic deploy on GitHub push
 ```
@@ -47,9 +49,11 @@ The entry point. It calls 3 modules and passes data between them:
 
 ```
 main.tf
-  calls → module "networking" → creates VNet and subnets
-  calls → module "compute"   → gets subnet IDs from networking
-  calls → module "database"  → gets VNet ID from networking
+  calls → module "networking"  → creates VNet and subnets
+  calls → module "aks"         → creates private K8s cluster
+  calls → module "app_gateway" → creates public entry point
+  calls → module "acr"         → creates image registry
+  calls → module "database"    → creates isolated database
 ```
 
 Without this file nothing gets deployed.
@@ -90,19 +94,14 @@ Creates the network foundation.
 
 ---
 
-## Module: compute
+## Module: aks
+Creates a private Azure Kubernetes Service (AKS) cluster for containerized workloads. Features a system node pool and Azure CNI networking.
 
-Creates all the servers.
+## Module: app_gateway
+Creates a Layer 7 Application Gateway as the entry point. Provides robust load balancing and is WAF-capable for enhanced security.
 
-**compute.tf** has 3 parts:
-1. **Load Balancer** — receives all web traffic on port 80 and splits it across VMs. Health checks VMs every 5 seconds.
-2. **VMSS (Virtual Machine Scale Set)** — 2 Ubuntu VMs that run the webpage. Auto-registered with the Load Balancer.
-3. **Bastion Host** — a small cheap VM with a public IP. The only way to SSH into private VMs.
-
-**init.sh** — runs automatically on every VM when it first boots. Installs Nginx and writes the Fortress VNet dashboard webpage to the VM. This is how the webpage gets deployed without any manual steps.
-
-**variables.tf** — inputs: subnet IDs, location, VM sizes etc.
-**outputs.tf** — exports: Load Balancer public IP, Bastion public IP.
+## Module: acr
+Creates an Azure Container Registry to store and manage Docker images. Linked to AKS for seamless image pulling.
 
 ---
 
@@ -151,10 +150,8 @@ Modules are isolated — they can't read from or write to each other directly.
 |------|--------------|
 | VNet | Your private network on Azure. Like your home Wi-Fi. |
 | Subnet | A section of the VNet. Each tier gets its own. |
-| NSG | A firewall. Controls what traffic is allowed. |
-| Load Balancer | Splits web traffic evenly across your VMs. |
-| VMSS | A group of VMs running the same config. |
-| NAT Gateway | Lets private VMs access the internet outbound only. |
-| Bastion Host | A jump server. SSH here first, then hop to private VMs. |
-| Private DNS Zone | Internal-only DNS. DB hostname only works inside the VNet. |
+| AKS | Azure Kubernetes Service. Orchestrates your containers. |
+| App Gateway | A smart load balancer that works at Layer 7 (HTTP/HTTPS). |
+| ACR | Azure Container Registry. Stores your Docker images. |
+| Private DNS Zone | Internal-only DNS. Hostnames only work inside the VNet. |
 | Remote Backend | Terraform state stored in Azure instead of locally. |
