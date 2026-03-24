@@ -25,12 +25,10 @@ Current project: Uses a Virtual Machine Scale Set (VMSS) with a single Ubuntu in
 Action Required: Move from VMs to AKS if you want to match the diagram.
 
 2. Traffic Management & Edge
-Application Gateway + WAF: The diagram uses this as the entry point for Layer 7 load balancing and security. The project currently uses a basic Standard Public Load Balancer.
 Azure CDN: Missing from the project.
 Internal Load Balancer: Missing (usually part of the AKS setup).
 
 3. Integrated PaaS Services
-Azure Container Registry (ACR): Missing (needed to store Docker images for AKS).
 Azure Cache for Redis: Missing (used for session/data caching).
 Azure Service Bus: Missing (used for messaging/decoupling).
 Key Vault: Missing (security best practice for secrets/certs shown in the diagram).
@@ -44,10 +42,8 @@ NAT Gateway: Explicitly shown in the diagram for outbound traffic; sometimes man
 Operations Suite: Missing Log Analytics Workspace, Azure Monitor, and Alerts.
 Governance Tools: Defender for Cloud, Policy, and Cost Management are shown as part of the management framework.
 
-🚀 Recommendation: What to Build Next
+Recommendation: What to Build Next
 To bridge the gap and move toward the architecture diagram, I recommend these steps in order:
-
-
 Add Shared Services: Deploy ACR, Key Vault, and Redis.
 Implement Observability: Setup Log Analytics and link it to the resources.
 Enable HA: Configure the PostgreSQL Flexible Server for High Availability (Zone Redundant).
