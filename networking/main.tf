@@ -39,6 +39,7 @@ module "database" {
   db_password         = random_password.db_password.result
   db_subnet_ids       = module.networking.db_subnet_ids
   vnet_id             = module.networking.vnet_id
+  vnet_name           = module.networking.vnet_name
 }
 
 # ── Application Gateway module ─────────────────────────────────────────────────

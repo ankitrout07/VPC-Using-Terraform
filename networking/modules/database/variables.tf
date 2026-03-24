@@ -42,3 +42,8 @@ variable "vnet_id" {
   description = "Resource ID of the VNet for Private DNS zone linking"
   type        = string
 }
+
+variable "vnet_name" {
+  description = "Name of the VNet"
+  type        = string
+}

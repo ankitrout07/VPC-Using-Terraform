@@ -11,7 +11,7 @@ resource "random_string" "db_suffix" {
 resource "azurerm_subnet" "postgres_delegated" {
   name                 = "${var.project_name}-pg-delegated-subnet"
   resource_group_name  = var.resource_group_name
-  virtual_network_name = data.azurerm_virtual_network.main.name
+  virtual_network_name = var.vnet_name
   address_prefixes     = ["10.0.30.0/24"]
 
   delegation {
@@ -21,12 +21,6 @@ resource "azurerm_subnet" "postgres_delegated" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
-}
-
-# Reference the VNet from outputs provided via variable
-data "azurerm_virtual_network" "main" {
-  name                = split("/", var.vnet_id)[8]
-  resource_group_name = var.resource_group_name
 }
 
 # 2. Private DNS Zone for PostgreSQL Flexible Server
