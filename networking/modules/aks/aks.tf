@@ -12,7 +12,7 @@ resource "azurerm_kubernetes_cluster" "main" {
   resource_group_name     = var.resource_group_name
   dns_prefix              = "${lower(var.project_name)}-k8s"
   kubernetes_version      = var.kubernetes_version
-  private_cluster_enabled = true # As per diagram: Private AKS Cluster
+  private_cluster_enabled = true # Private AKS Cluster
 
   default_node_pool {
     name           = "systempool"
@@ -31,9 +31,9 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
 
   network_profile {
-    network_plugin    = "azure" # Azure CNI as per diagram
+    network_plugin    = "azure" # Azure CNI 
     load_balancer_sku = "standard"
-    # Use standard CNI defaults for networking
+    # CNI defaults for networking
     service_cidr   = "10.1.0.0/16"
     dns_service_ip = "10.1.0.10"
   }
