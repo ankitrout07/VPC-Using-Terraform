@@ -1,6 +1,6 @@
-# Fortress VNet — Azure 3-Tier Architecture (Terraform)
+# Fortress VNet — Azure AKS 3-Tier Architecture (Terraform)
 
-Production-grade, secure 3-Tier Virtual Network on Azure, fully provisioned with Terraform. Includes a Nginx-served web dashboard on every app VM.
+Production-grade, secure 3-Tier Virtual Network on Azure, fully provisioned with Terraform. Features a private AKS cluster protected by an Application Gateway with WAF.
 
 ## Architecture
 
@@ -8,14 +8,14 @@ Production-grade, secure 3-Tier Virtual Network on Azure, fully provisioned with
 Internet
    │  HTTP / HTTPS
    ▼
-[Load Balancer — Static Public IP]
-   │
+[Application Gateway — Static Public IP]
+   │  (WAF Enabled + AGIC)
    ▼
-[Tier 1: Public Subnets]  ←──── Bastion Host (SSH jump)
+[Tier 1: Public Subnets]
    │
    ▼
 [Tier 2: Private App Subnets]
-  [VMSS — Ubuntu 22.04 + Nginx webpage]
+  [Private AKS Cluster — Azure CNI]
    │  NAT Gateway (egress only)
    ▼
 [Tier 3: Isolated DB Subnets]
@@ -25,14 +25,15 @@ Internet
 
 ### Tiers
 
-1. **Tier 1: Web (Public)**
-   - Standard Public Load Balancer with HTTP health probe
-   - Bastion Host VM for SSH jump access to private instances
+1. **Tier 1: Gateway (Public)**
+   - Azure Application Gateway v2 (Standard_v2 / WAF_v2)
+   - Integrated Ingress Controller (AGIC) for automated traffic routing
+   - Dedicated Public IP for external access
 
 2. **Tier 2: App (Private)**
-   - Virtual Machine Scale Set (VMSS) — Ubuntu 22.04 LTS, 2 instances
-   - Serves an architecture dashboard webpage via Nginx
-   - No direct inbound internet access; egress via NAT Gateway
+   - Azure Kubernetes Service (AKS) — Private Cluster
+   - Azure CNI Networking for pod-to-vnet connectivity
+   - No direct inbound internet access; egress via NAT Gateway for secure updates
 
 3. **Tier 3: DB (Isolated)**
    - Azure PostgreSQL Flexible Server v15
@@ -40,10 +41,10 @@ Internet
    - Private DNS Zone (`*.private.postgres.database.azure.com`)
 
 ### Security
-- **NSGs**: 4 rulesets restricting traffic per-tier (HTTP, SSH, PostgreSQL port 5432)
-- **Bastion Host**: Only entry point for SSH into private instances
-- **NAT Gateway**: Controlled, auditable egress from the app tier
-- **Remote State**: AzureRM backend in `networking/provider.tf` (configure before deploying)
+- **AGIC**: Application Gateway Ingress Controller manages L7 traffic directly to pods.
+- **Private AKS**: The Kubernetes API and nodes are not exposed to the public internet.
+- **RBAC**: Managed Identities with least-privilege role assignments (Contributor, Network Contributor).
+- **NAT Gateway**: Controlled, auditable egress from the AKS nodes.
 
 ## Project Structure
 
@@ -53,14 +54,16 @@ Internet
 │   ├── main.tf
 │   └── outputs.tf
 ├── networking/            # Step 2: Main infrastructure
-│   ├── main.tf            # Root module — wires all 3 modules
+│   ├── main.tf            # Root module — wires all modules
 │   ├── provider.tf        # AzureRM provider + backend config
 │   ├── variables.tf
 │   ├── terraform.tfvars   # Your deployment variables (gitignored)
 │   ├── outputs.tf
 │   └── modules/
 │       ├── networking/    # VNet, subnets, NSGs, NAT Gateway, routes
-│       ├── compute/       # Load Balancer, VMSS, Bastion, init.sh webpage
+│       ├── aks/           # Private K8s Cluster + AGIC Addon
+│       ├── app_gateway/   # Application Gateway v2
+│       ├── acr/           # Container Image Registry
 │       └── database/      # PostgreSQL Flexible Server, Private DNS
 ├── .github/workflows/
 │   └── deploy.yml         # CI/CD: plan on PR, apply on merge to main

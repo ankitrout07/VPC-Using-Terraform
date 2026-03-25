@@ -95,10 +95,21 @@ Creates the network foundation.
 ---
 
 ## Module: aks
-Creates a private Azure Kubernetes Service (AKS) cluster for containerized workloads. Features a system node pool and Azure CNI networking.
+Creates a private Azure Kubernetes Service (AKS) cluster for containerized workloads. 
+- **Networking**: Uses Azure CNI for direct pod-to-vnet IP allocation.
+- **AGIC Addon**: Enabled to integrate with the Application Gateway.
+- **Managed Identity**: Uses a user-assigned identity for the cluster.
 
 ## Module: app_gateway
-Creates a Layer 7 Application Gateway as the entry point. Provides robust load balancing and is WAF-capable for enhanced security.
+Creates a Layer 7 Application Gateway v2 as the entry point. 
+- **AGIC Integration**: Managed by the AKS Ingress Controller.
+- **WAF-ready**: Can be upgraded to WAF_v2 for OWASP protection.
+- **Frontend**: Public IP on port 80.
+
+## AGIC Role Assignments
+The AGIC integration requires specific permissions for the AKS managed identity to control the Application Gateway:
+1. **Contributor**: On the Application Gateway resource.
+2. **Network Contributor**: On the Virtual Network (for managing backend pools and subnets).
 
 ## Module: acr
 Creates an Azure Container Registry to store and manage Docker images. Linked to AKS for seamless image pulling.
