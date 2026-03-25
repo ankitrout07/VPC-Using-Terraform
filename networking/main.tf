@@ -19,9 +19,12 @@ module "aks" {
   resource_group_name = module.networking.resource_group_name
   node_vm_size        = var.vm_size
   vnet_subnet_id      = module.networking.app_subnet_ids[0]
+  gateway_id          = module.app_gateway.appgw_id
+  gateway_subnet_id   = module.networking.gateway_subnet_id
 }
 
 # ── Database module ────────────────────────────────────────────────────────────
+# ... (existing database module)
 resource "random_password" "db_password" {
   length           = 16
   special          = true
@@ -67,4 +70,18 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
   role_definition_name             = "AcrPull"
   scope                            = module.acr.acr_id
   skip_service_principal_aad_check = true
+}
+
+# AGIC Role Assignments
+# The AGIC identity needs Contributor on the App Gateway and Network Contributor on the VNet
+resource "azurerm_role_assignment" "agic_appgw_contributor" {
+  scope                = module.app_gateway.appgw_id
+  role_definition_name = "Contributor"
+  principal_id         = module.aks.principal_id # Using the cluster identity for simplicity, or specific if needed
+}
+
+resource "azurerm_role_assignment" "agic_vnet_network_contributor" {
+  scope                = module.networking.vnet_id
+  role_definition_name = "Network Contributor"
+  principal_id         = module.aks.principal_id
 }

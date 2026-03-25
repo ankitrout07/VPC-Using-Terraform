@@ -38,6 +38,10 @@ resource "azurerm_kubernetes_cluster" "main" {
     dns_service_ip = "10.1.0.10"
   }
 
+  ingress_application_gateway {
+    gateway_id = var.gateway_id
+  }
+
   tags = {
     Environment = "Production"
     Project     = var.project_name

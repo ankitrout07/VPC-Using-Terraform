@@ -37,3 +37,13 @@ variable "vnet_subnet_id" {
   description = "ID of the subnet where AKS nodes and pods will reside"
   type        = string
 }
+
+variable "gateway_id" {
+  description = "The ID of the Application Gateway to associate with AGIC"
+  type        = string
+}
+
+variable "gateway_subnet_id" {
+  description = "The ID of the subnet where the Application Gateway resides"
+  type        = string
+}
