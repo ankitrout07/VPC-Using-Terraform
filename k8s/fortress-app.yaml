@@ -12,9 +12,8 @@ spec:
       labels:
         app: fortress
     spec:
-      containers:
-        - name: nginx
-          image: nginx:latest
+        - name: fortress-dashboard
+          image: fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v1
           ports:
             - containerPort: 80
 ---

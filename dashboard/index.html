@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortress VNet - Infrastructure Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="glass-container">
+        <header>
+            <h1>Fortress VNet</h1>
+            <p>Live Infrastructure Monitoring Dashboard</p>
+        </header>
+        
+        <main class="dashboard-grid">
+            <div class="card health">
+                <div class="icon">🛡️</div>
+                <h3>System Health</h3>
+                <div class="status-badge pulse">Healthy</div>
+                <p>All core systems operational</p>
+            </div>
+            
+            <div class="card connectivity">
+                <div class="icon">🌐</div>
+                <h3>Connectivity</h3>
+                <div class="status-badge">Private</div>
+                <p>Secure VNet communication active</p>
+            </div>
+            
+            <div class="card cluster">
+                <div class="icon">☸️</div>
+                <h3>AKS Cluster</h3>
+                <div class="status-badge">Connected</div>
+                <p>Nodes: 3 | Pods: 24</p>
+            </div>
+            
+            <div class="card gateway">
+                <div class="icon">🚀</div>
+                <h3>App Gateway</h3>
+                <div class="status-badge">Online</div>
+                <p>WAF protection enabled</p>
+            </div>
+        </main>
+        
+        <footer>
+            <div class="uptime">
+                <span class="dot"></span> System Live: 99.99% Uptime
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
