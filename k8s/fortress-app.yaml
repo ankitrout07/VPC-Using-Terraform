@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fortress-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fortress
+  template:
+    metadata:
+      labels:
+        app: fortress
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortress-service
+spec:
+  selector:
+    app: fortress
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
