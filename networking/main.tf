@@ -96,20 +96,27 @@ resource "azurerm_role_assignment" "agic_vnet_network_contributor" {
 }
 
 # ── Docker Build & Push ────────────────────────────────────────────────────────
-resource "docker_image" "dashboard" {
-  name = "${module.acr.login_server}/fortress-dashboard:v2"
-  build {
-    context = "../dashboard"
+resource "null_resource" "docker_push" {
+  triggers = {
+    # Re-run if the dashboard files change
+    hash = sha1(join("", [for f in fileset("${path.module}/../dashboard", "*") : filebase64("${path.module}/../dashboard/${f}")]))
   }
-}
 
-resource "docker_registry_image" "dashboard" {
-  name          = docker_image.dashboard.name
-  keep_remotely = true
+  provisioner "local-exec" {
+    command = <<EOF
+      az acr login --name ${module.acr.acr_name}
+      docker build -t ${module.acr.login_server}/fortress-dashboard:v2 ${path.module}/../dashboard
+      docker push ${module.acr.login_server}/fortress-dashboard:v2
+    EOF
+  }
+
+  depends_on = [module.acr]
 }
 
 # ── Kubernetes Deployment ──────────────────────────────────────────────────────
 resource "kubernetes_deployment" "fortress_web" {
+  depends_on = [null_resource.docker_push, module.aks]
+
   metadata {
     name = "fortress-web"
     labels = {
@@ -135,7 +142,7 @@ resource "kubernetes_deployment" "fortress_web" {
       spec {
         container {
           name  = "fortress-dashboard"
-          image = docker_registry_image.dashboard.name
+          image = "${module.acr.login_server}/fortress-dashboard:v2"
           port {
             container_port = 80
           }
