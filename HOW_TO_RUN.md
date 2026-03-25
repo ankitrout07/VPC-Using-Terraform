@@ -100,13 +100,13 @@ Since we've replaced the default Nginx page with a custom dashboard, you need to
 **1. Build the Docker Image:**
 ```bash
 cd dashboard
-docker build -t fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v1 .
+docker build -t fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v2 .
 ```
 
 **2. Push to ACR:**
 ```bash
 # Ensure you are logged in (from Step 4)
-docker push fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v1
+docker push fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v2
 ```
 
 **3. Apply to Kubernetes:**

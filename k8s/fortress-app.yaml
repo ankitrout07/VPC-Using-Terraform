@@ -13,7 +13,7 @@ spec:
         app: fortress
     spec:
         - name: fortress-dashboard
-          image: fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v1
+          image: fortressvnetacr3x3rgz.azurecr.io/fortress-dashboard:v2
           ports:
             - containerPort: 80
 ---
