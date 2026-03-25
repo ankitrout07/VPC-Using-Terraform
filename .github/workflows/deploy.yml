@@ -1,107 +1,65 @@
-name: Terraform-Infra-Pipeline
+name: Deploy Infrastructure and App
 
 on:
   push:
-    branches: [ main ]
-    paths: ['networking/**']
-  pull_request:
-    branches: [ main ]
-    paths: ['networking/**']
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  terraform:
-    name: 'Terraform'
+  deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./networking
-    permissions:
-      contents: read
-      pull-requests: write  # Needed to post plan comment on PRs
-
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────────────
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # ── 2. Setup Terraform ─────────────────────────────────────────────────
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: "1.5.7"
+          terraform_version: 1.5.0
 
-      # ── 3. Init ────────────────────────────────────────────────────────────
-      # NOTE: Requires the backend azurerm block in provider.tf to be uncommented
-      # and storage_account_name filled in from backend-init outputs.
       - name: Terraform Init
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RG }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_ACCOUNT }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+        working-directory: ./networking
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      # ── 4. Validate ────────────────────────────────────────────────────────
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
-
-      # ── 5. Plan ────────────────────────────────────────────────────────────
-      # FIX: Pass db_password from GitHub secret so plan doesn't stall interactively
       - name: Terraform Plan
-        id: plan
-        run: |
-          terraform plan \
-            -no-color \
-            -var="db_password=${{ secrets.TF_DB_PASSWORD }}" \
-            -out=tfplan 2>&1 | tee plan.txt
-        continue-on-error: true  # Allow the next step to post the result even on failure
+        run: terraform plan -out=tfplan
+        working-directory: ./networking
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      # ── 6. Post Plan to PR ─────────────────────────────────────────────────
-      # FIX: Comment the full plan output on the pull request for easy review
-      - name: Post Plan Comment on PR
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync('./networking/plan.txt', 'utf8');
-            const maxLen = 65000;
-            const truncated = plan.length > maxLen
-              ? plan.substring(0, maxLen) + '\n\n--- Output truncated ---'
-              : plan;
-
-            const output = `#### 🔍 Terraform Plan — \`${{ steps.plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-
-            \`\`\`hcl
-            ${truncated}
-            \`\`\`
-
-            </details>
-
-            *Pushed by @${{ github.actor }}, action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
-
-      # Fail the job if plan itself failed (after we've posted the comment)
-      - name: Check Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
-
-      # ── 7. Apply (main branch merges only) ────────────────────────────────
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./networking
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: AKS Get Credentials
         run: |
-          terraform apply \
-            -auto-approve \
-            -var="db_password=${{ secrets.TF_DB_PASSWORD }}" \
-            tfplan
+          az aks get-credentials --resource-group Fortress-VNet-rg --name Fortress-VNet-aks --overwrite-existing
+
+      - name: Verify Deployment
+        run: |
+          kubectl get nodes
+          kubectl get pods -n default

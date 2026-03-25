@@ -1,17 +1,6 @@
-# Terraform local state
-*.tfstate
-*.tfstate.backup
 .terraform/
-.terraform.lock.hcl
-
-# Terraform execution artifacts
-*.tfplan
-*destroyplan
-apply_log.txt
-
-# Sensitive variables
+*.tfstate
+*.tfstate.*
 *.tfvars
-auth_token.txt
-
-# OS generated files
-.DS_Store
+*.tfplan
+.terraform.lock.hcl

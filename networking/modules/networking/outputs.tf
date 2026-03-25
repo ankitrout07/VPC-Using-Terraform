@@ -40,3 +40,8 @@ output "resource_group_location" {
   description = "Location of the shared resource group"
   value       = azurerm_resource_group.main.location
 }
+
+output "resource_group_id" {
+  description = "The ID of the shared resource group"
+  value       = azurerm_resource_group.main.id
+}
