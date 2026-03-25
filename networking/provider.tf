@@ -21,13 +21,6 @@ terraform {
       version = "~> 3.0"
     }
   }
-
-  # backend "azurerm" {
-  #   resource_group_name  = "rg-terraform-mgmt-prod"
-  #   storage_account_name = "<YOUR_AZURE_STORAGE_ACCOUNT_NAME>"
-  #   container_name       = "tfstate"
-  #   key                  = "networking-azure.terraform.tfstate"
-  # }
 }
 
 provider "azurerm" {
@@ -35,5 +28,20 @@ provider "azurerm" {
     resource_group {
       prevent_deletion_if_contains_resources = false
     }
+  }
+}
+
+provider "kubernetes" {
+  host                   = module.aks.host
+  client_certificate     = base64decode(module.aks.client_certificate)
+  client_key             = base64decode(module.aks.client_key)
+  cluster_ca_certificate = base64decode(module.aks.cluster_ca_certificate)
+}
+
+provider "docker" {
+  registry_auth {
+    address  = module.acr.login_server
+    username = module.acr.admin_username
+    password = module.acr.admin_password
   }
 }

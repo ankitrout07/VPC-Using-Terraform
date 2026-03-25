@@ -109,13 +109,83 @@ resource "docker_registry_image" "dashboard" {
 }
 
 # ── Kubernetes Deployment ──────────────────────────────────────────────────────
-# Using kubernetes_manifest for flexibility (reads from your k8s/ directory)
-resource "kubernetes_manifest" "fortress_web" {
-  manifest = yamldecode(file("${path.module}/../k8s/fortress-app.yaml"))
-  depends_on = [docker_registry_image.dashboard, module.aks]
+resource "kubernetes_deployment" "fortress_web" {
+  metadata {
+    name = "fortress-web"
+    labels = {
+      app = "fortress"
+    }
+  }
+
+  spec {
+    replicas = 2
+    selector {
+      match_labels = {
+        app = "fortress"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "fortress"
+        }
+      }
+
+      spec {
+        container {
+          name  = "fortress-dashboard"
+          image = docker_registry_image.dashboard.name
+          port {
+            container_port = 80
+          }
+        }
+      }
+    }
+  }
 }
 
-resource "kubernetes_manifest" "fortress_ingress" {
-  manifest = yamldecode(file("${path.module}/../k8s/fortress-ingress.yaml"))
-  depends_on = [kubernetes_manifest.fortress_web]
+resource "kubernetes_service" "fortress_service" {
+  metadata {
+    name = "fortress-service"
+  }
+
+  spec {
+    selector = {
+      app = "fortress"
+    }
+    port {
+      port        = 80
+      target_port = 80
+    }
+    type = "ClusterIP"
+  }
+}
+
+resource "kubernetes_ingress_v1" "fortress_ingress" {
+  metadata {
+    name = "fortress-ingress"
+    annotations = {
+      "kubernetes.io/ingress.class" = "azure/application-gateway"
+    }
+  }
+
+  spec {
+    rule {
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.fortress_service.metadata[0].name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
