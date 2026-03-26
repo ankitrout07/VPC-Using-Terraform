@@ -123,7 +123,7 @@ resource "kubernetes_deployment" "fortress_web" {
   depends_on = [null_resource.docker_push, module.aks]
 
   metadata {
-    name = "fortress-web"
+    name = "fortress-web-${random_id.suffix.hex}"
     labels = {
       app = "fortress"
     }
@@ -159,7 +159,7 @@ resource "kubernetes_deployment" "fortress_web" {
 
 resource "kubernetes_service" "fortress_service" {
   metadata {
-    name = "fortress-service"
+    name = "fortress-service-${random_id.suffix.hex}"
   }
 
   spec {
@@ -176,7 +176,7 @@ resource "kubernetes_service" "fortress_service" {
 
 resource "kubernetes_ingress_v1" "fortress_ingress" {
   metadata {
-    name = "fortress-ingress"
+    name = "fortress-ingress-${random_id.suffix.hex}"
     annotations = {
       "kubernetes.io/ingress.class" = "azure/application-gateway"
     }

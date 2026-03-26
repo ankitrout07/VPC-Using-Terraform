@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="particles"></div>
+    <div class="bg-vignette"></div>
     <div class="app-container">
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -24,6 +26,9 @@
                 </li>
                 <li onclick="switchTab('nodes')">
                     <span class="icon">🖥️</span> Nodes
+                </li>
+                <li onclick="switchTab('database')">
+                    <span class="icon">🗄️</span> Database
                 </li>
                 <li onclick="switchTab('events')">
                     <span class="icon">📜</span> Events
@@ -58,6 +63,12 @@
                         <h3>Connectivity</h3>
                         <div class="status-badge">Private</div>
                         <p>Secure VNet communication active</p>
+                    </div>
+                    <div class="card database">
+                        <div class="icon">🗄️</div>
+                        <h3>Database</h3>
+                        <div class="status-badge">Primary</div>
+                        <p>PostgreSQL cluster optimized</p>
                     </div>
                     <div class="card gateway">
                         <div class="icon">🚀</div>
@@ -133,16 +144,53 @@
             <section id="nodes" class="tab-content">
                 <div class="nodes-grid">
                     <div class="node-card">
-                        <h4>aks-agentpool-01</h4>
+                        <div class="node-header">
+                           <h4>aks-agentpool-01</h4>
+                           <span class="dot green"></span>
+                        </div>
                         <p>Status: <span class="text-success">Ready</span></p>
                         <div class="mini-stat">CPU: 24%</div>
                         <div class="mini-stat">RAM: 3.2GB / 8GB</div>
                     </div>
                     <div class="node-card">
-                        <h4>aks-agentpool-02</h4>
+                        <div class="node-header">
+                           <h4>aks-agentpool-02</h4>
+                           <span class="dot green"></span>
+                        </div>
                         <p>Status: <span class="text-success">Ready</span></p>
                         <div class="mini-stat">CPU: 18%</div>
                         <div class="mini-stat">RAM: 2.1GB / 8GB</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Section -->
+            <section id="database" class="tab-content">
+                <div class="database-card card">
+                    <div class="db-header">
+                        <div class="icon">🗄️</div>
+                        <h3>PostgreSQL - FortressDB</h3>
+                        <div class="status-badge">Active</div>
+                    </div>
+                    <div class="db-details">
+                        <div class="stat-group">
+                            <label>Status</label>
+                            <span class="val">Running</span>
+                        </div>
+                        <div class="stat-group">
+                            <label>Connections</label>
+                            <span class="val">12 Active</span>
+                        </div>
+                        <div class="stat-group">
+                            <label>Storage Used</label>
+                            <span class="val">1.2 GB / 50 GB</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="metric">
+                            <label>Transactions / sec</label>
+                            <div class="mini-bar"><div class="fill" style="width: 45%;"></div></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -172,6 +220,7 @@
                 'overview': 'Infrastructure Overview',
                 'network': 'Network Topology',
                 'nodes': 'Cluster Nodes',
+                'database': 'Database Instance',
                 'events': 'Event Logs'
             };
             document.getElementById('tab-title').textContent = titleMap[tabId];
