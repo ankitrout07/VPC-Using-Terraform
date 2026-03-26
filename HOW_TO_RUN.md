@@ -29,27 +29,33 @@ A browser window opens. Sign in. Come back to the terminal.
 
 ---
 
-## Step 2 — Create the Remote Backend (first time only)
+---
+
+## Step 2 — Deploy the Infrastructure
+
+The project is now configured to be **totally non-interactive**. All resource names are randomised automatically.
 
 ```bash
-cd backend-init
+cd networking
 terraform init
-terraform apply
+terraform apply -auto-approve
 ```
 
-Type `yes` when asked. When it finishes, **copy the `storage_account_name` value** it prints — you'll need it later.
+This will:
+1. Create a unique resource group, VNet, AKS cluster, and Database.
+2. Build and push your custom dashboard to ACR.
+3. Deploy the application to AKS.
+
+This takes about **10–15 minutes** (AKS and Application Gateway deployment).
 
 ---
 
-## Step 3 — Deploy the Infrastructure
-
-```bash
-cd ../networking
-terraform init
-terraform apply -var="db_password=YourPassword123!"
+## Step 3 — Access the Dashboard
+Once the deployment finishes, the Application Gateway public IP will be displayed. Open your browser and navigate to:
 ```
-
-Type `yes`. This takes about **10–15 minutes** (AKS and Application Gateway deployment).
+http://<app_gateway_public_ip>
+```
+*(Note: It may take 5 minutes for the Gateway to finish its initial health checks).*
 
 ---
 
