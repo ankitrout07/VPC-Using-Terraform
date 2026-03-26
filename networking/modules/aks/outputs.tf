@@ -37,6 +37,10 @@ output "principal_id" {
   value = azurerm_user_assigned_identity.aks_identity.principal_id
 }
 
+output "kubelet_identity_id" {
+  value = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+}
+
 output "ingress_identity_id" {
   value = azurerm_kubernetes_cluster.main.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
