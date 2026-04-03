@@ -12,9 +12,9 @@ Internet
    ↓
 Application Gateway (WAF-ready + AGIC)
    ↓
-Private AKS Cluster (Azure CNI)
+Private AKS Cluster (Azure CNI) ↔ Redis Cache
    ↓
-Custom Dashboard (Nginx Container)
+Private Services (Bastion)
    ↓
 PostgreSQL Flexible Server (Private DNS)
 ```
@@ -22,7 +22,9 @@ PostgreSQL Flexible Server (Private DNS)
 ### Infrastructure Tiers
 1.  **Tier 1: Gateway (Public)**: Azure Application Gateway v2 provides L7 load balancing and edge security (WAF).
 2.  **Tier 2: App (Private)**: Private AKS Cluster running the monitoring dashboard. Pods receive VNet IPs via Azure CNI.
-3.  **Tier 3: DB (Isolated)**: PostgreSQL Flexible Server v15 in a delegated subnet with zero public access, resolved via a Private DNS Zone.
+3.  **Tier 3: DB (Isolated)**: PostgreSQL Flexible Server v15 in a delegated subnet with zero public access.
+4.  **Tier 4: Cache (Private)**: Redis Standard C1 for high-performance session and data caching.
+5.  **Tier 5: Access (Public/Private)**: Azure Bastion Service for secure, browser-based RDP/SSH access.
 
 ---
 
@@ -39,7 +41,9 @@ PostgreSQL Flexible Server (Private DNS)
 │       ├── aks/           # Private Cluster + AGIC Add-on
 │       ├── app_gateway/   # Application Gateway v2
 │       ├── acr/           # Container Registry
-│       └── database/      # PostgreSQL + Private DNS
+│       ├── database/      # PostgreSQL + Private DNS
+│       ├── redis/         # Redis Cache + Private Endpoint
+│       └── bastion/       # Azure Bastion Service
 ├── ARCHITECTURE.md        # Detailed component breakdown
 └── HOW_TO_RUN.md          # Original quick-start guide
 ```

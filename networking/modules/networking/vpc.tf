@@ -46,3 +46,20 @@ resource "azurerm_subnet" "gateway" {
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 40)] # 10.0.40.0/24
 }
+
+# --- TIER 5: BASTION ---
+# Must be named exactly 'AzureBastionSubnet'
+resource "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 50)] # 10.0.50.0/24
+}
+
+# --- TIER 6: REDIS / PRIVATE SERVICES ---
+resource "azurerm_subnet" "redis" {
+  name                 = "${var.project_name}-redis-subnet"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 30)] # 10.0.30.0/24
+}

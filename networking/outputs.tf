@@ -18,8 +18,6 @@ output "acr_login_server" {
   value       = module.acr.login_server
 }
 
-
-
 output "db_server_fqdn" {
   description = "FQDN of the PostgreSQL Flexible Server (resolve inside VNet only)"
   value       = module.database.db_server_fqdn
@@ -47,4 +45,19 @@ output "mgmt_resource_group_name" {
 output "resource_group_name" {
   description = "The main resource group name"
   value       = module.networking.resource_group_name
+}
+
+output "redis_hostname" {
+  description = "The hostname of the Redis instance"
+  value       = module.redis.redis_hostname
+}
+
+output "redis_port" {
+  description = "The SSL port of the Redis instance"
+  value       = module.redis.redis_port
+}
+
+output "bastion_name" {
+  description = "The name of the Bastion Host"
+  value       = module.bastion.bastion_name
 }

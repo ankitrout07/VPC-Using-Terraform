@@ -96,9 +96,4 @@ resource "azurerm_role_assignment" "agic_appgw_contributor" {
   principal_id         = module.aks.ingress_identity_id
 }
 
-resource "azurerm_role_assignment" "agic_vnet_network_contributor" {
-  scope                = module.networking.vnet_id
-  role_definition_name = "Network Contributor"
-  principal_id         = module.aks.ingress_identity_id
-}
 

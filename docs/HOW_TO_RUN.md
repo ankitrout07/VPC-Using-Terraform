@@ -66,19 +66,6 @@ When it finishes you'll see something like:
 aks_cluster_name      = "Fortress-VNet-aks"
 app_gateway_public_ip = "20.x.x.x"
 acr_login_server      = "fortressvnetacrxxxx.azurecr.io"
-db_server_fqdn        = "fortress-pg-xxx.private.postgres.database.azure.com"
-```
-
-### 5. Stunning Frontend Dashboard
-- **Advanced Glassmorphism**: High-contrast blur and multi-layered shadows for a premium UI.
-- **Dynamic Background**: Radial gradients and animated "data particles" for an immersive feel.
-- **New Features**: Added a **Database** status tab and enhanced **Cluster Nodes** monitoring.
-- **Micro-animations**: Smooth hover transitions and pulse indicators for high-fidelity interaction.
-
-### Accessing the Cluster
-Since the cluster is **Private**, you cannot reach it directly from the internet. You must:
-1. Deploy a **Bastion Host** (uncommented in `compute.tf` - *coming soon*) or
-2. Use a **VPN/Site-to-Site** connection.
 
 ### Accessing the Web App
 Once you've deployed an ingress/service to AKS, you can reach it via:

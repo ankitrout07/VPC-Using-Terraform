@@ -6,11 +6,11 @@ Internet
    ↓
 Application Gateway (WAF-ready)
    ↓
-Private AKS Cluster (K8s)
+Private AKS Cluster (K8s) ↔ Redis Cache (Private)
    ↓
-Custom Dashboard (Nginx)
+Bastion Host (Public Subnet) → Remote Access
    ↓
-PostgreSQL Database (private)
+PostgreSQL Database (Isolated)
 ```
 
 Everything lives inside a Virtual Network (VNet) — a private isolated network on Azure.
@@ -32,6 +32,8 @@ networking/          → Step 2: the actual infrastructure
     app_gateway/     → Edge Security & Layer 7 Load Balancing
     acr/             → Container Image Registry
     database/        → PostgreSQL server
+    redis/           → Redis Cache (Standard C1)
+    bastion/         → Azure Bastion for secure access
 .github/workflows/   → automatic deploy on GitHub push
 ```
 
@@ -56,6 +58,8 @@ main.tf
   calls → module "app_gateway" → creates public entry point
   calls → module "acr"         → creates image registry
   calls → module "database"    → creates isolated database
+  calls → module "redis"       → creates private Redis cache
+  calls → module "bastion"     → creates secure remote access
 ```
 
 Without this file nothing gets deployed.
@@ -81,8 +85,9 @@ Creates the network foundation.
 
 **vpc.tf** — makes the VNet and 6 subnets:
 - 2 public subnets (for Load Balancer and Bastion)
-- 2 app subnets (for VMs — private, no direct internet)
+- 2 app subnets (for AKS — private, no direct internet)
 - 2 DB subnets (for database — fully isolated)
+- 1 Redis subnet (for private data services)
 
 **security.tf** — firewall rules (NSGs) per tier:
 - Public: allow HTTP/HTTPS from internet
@@ -166,5 +171,7 @@ Modules are isolated — they can't read from or write to each other directly.
 | AKS | Azure Kubernetes Service. Orchestrates your containers. |
 | App Gateway | A smart load balancer that works at Layer 7 (HTTP/HTTPS). |
 | ACR | Azure Container Registry. Stores your Docker images. |
+| Redis | High-speed in-memory data store for caching. |
+| Bastion | Secure browser-based SSH/RDP access to private resources. |
 | Private DNS Zone | Internal-only DNS. Hostnames only work inside the VNet. |
 | Remote Backend | Terraform state stored in Azure instead of locally. |
