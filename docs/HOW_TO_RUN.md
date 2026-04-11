@@ -42,7 +42,7 @@ terraform apply -auto-approve
 ```
 
 This will:
-1. Create a unique resource group, VNet, AKS cluster, and Database.
+1. Create a single, shared Resource Group for all components (VNet, AKS, DB, Redis, Bastion, and State Storage).
 2. Build and push your custom dashboard to ACR.
 3. Deploy the application to AKS.
 

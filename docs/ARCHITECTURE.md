@@ -13,7 +13,7 @@ Bastion Host (Public Subnet) → Remote Access
 PostgreSQL Database (Isolated)
 ```
 
-Everything lives inside a Virtual Network (VNet) — a private isolated network on Azure.
+Everything lives inside a single, unified Virtual Network (VNet) and shared Resource Group — providing a private, isolated network on Azure with simplified management.
 
 ---
 
@@ -53,13 +53,14 @@ The entry point. It calls 3 modules and passes data between them:
 
 ```
 main.tf
-  calls → module "networking"  → creates VNet and subnets
+  calls → module "networking"  → creates VNet, subnets, and shared Resource Group
   calls → module "aks"         → creates private K8s cluster
   calls → module "app_gateway" → creates public entry point
   calls → module "acr"         → creates image registry
   calls → module "database"    → creates isolated database
   calls → module "redis"       → creates private Redis cache
   calls → module "bastion"     → creates secure remote access
+  creates → azurerm_storage_account.tfstate → stores terraform state in the same RG
 ```
 
 Without this file nothing gets deployed.

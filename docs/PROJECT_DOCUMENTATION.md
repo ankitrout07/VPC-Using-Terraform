@@ -26,6 +26,9 @@ PostgreSQL Flexible Server (Private DNS)
 4.  **Tier 4: Cache (Private)**: Redis Standard C1 for high-performance session and data caching.
 5.  **Tier 5: Access (Public/Private)**: Azure Bastion Service for secure, browser-based RDP/SSH access.
 
+> [!NOTE]
+> All infrastructure components, including the Terraform state storage and networking resources, are now consolidated into a **single, shared Resource Group** for streamlined management and improved visibility.
+
 ---
 
 ## 2. Project Structure
