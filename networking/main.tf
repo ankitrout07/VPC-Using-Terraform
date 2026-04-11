@@ -73,6 +73,7 @@ module "acr" {
   project_name        = local.project_name_random
   location            = var.location
   resource_group_name = module.networking.resource_group_name
+  admin_enabled       = true
 }
 
 # ── Bastion module ─────────────────────────────────────────────────────────────
