@@ -93,6 +93,24 @@ resource "kubernetes_deployment" "fortress_web" {
               memory = "256Mi"
             }
           }
+
+          readiness_probe {
+            http_get {
+              path = "/api/health"
+              port = 80
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/api/health"
+              port = 80
+            }
+            initial_delay_seconds = 15
+            period_seconds        = 20
+          }
         }
       }
     }
@@ -125,8 +143,9 @@ resource "kubernetes_ingress_v1" "fortress_ingress" {
     name      = "fortress-ingress"
     namespace = "default"
     annotations = {
-      # Deprecated, but keeping for legacy compatibility if needed
-      # "kubernetes.io/ingress.class" = "azure/application-gateway"
+      "kubernetes.io/ingress.class"                       = "azure/application-gateway"
+      "appgw.ingress.kubernetes.io/backend-path-prefix"   = "/"
+      "appgw.ingress.kubernetes.io/health-probe-path"     = "/api/health"
     }
   }
 
