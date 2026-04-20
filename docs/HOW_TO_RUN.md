@@ -8,6 +8,7 @@ Make sure you have these installed:
 terraform --version   # needs to be >= 1.0
 az --version          # Azure CLI
 kubectl version       # Kubernetes CLI
+node --version        # Node.js (for dashboard backend)
 ls ~/.ssh/id_rsa.pub  # SSH key
 ```
 
@@ -116,6 +117,31 @@ kubectl apply -f fortress-ingress.yaml
 
 **4. Access the Dashboard:**
 Open your browser and navigate to the `app_gateway_public_ip` (from Step 4 output).
+
+---
+
+## Step 6 — Verify Real-Time WebSocket Updates
+
+Once the dashboard is running, you can verify the real-time pod monitoring:
+
+**1. Open the Dashboard** in your browser → go to the **Cluster Nodes** tab.
+
+**2. Watch pods appear** — the Pod Counter card on the Overview tab shows the current count.
+
+**3. Trigger Autoscaling with ApacheBench:**
+```bash
+ab -n 20000 -c 200 http://<APP_GATEWAY_IP>/
+```
+
+**4. What You'll See:**
+
+| Phase | Pod Counter | Tag | Terminal Log |
+|-------|-------------|-----|--------------|
+| Before load | 2 | `STABLE` | — |
+| During load | 2 → 4 → 8+ | `SCALING UP` (pulsing) | `HPA Triggered: Scaling from 2 → 8 pods` |
+| After load | Scales back down | `SCALING DOWN` | `Workload decreased: Scaling down to 2 pods` |
+
+The dashboard updates every **2 seconds** via WebSocket — no page refresh needed.
 
 ---
 

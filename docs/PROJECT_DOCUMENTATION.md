@@ -35,7 +35,7 @@ PostgreSQL Flexible Server (Private DNS)
 
 ```
 .
-├── dashboard/             # Custom Monitoring Dashboard (HTML/CSS)
+├── dashboard/             # Real-Time Dashboard (Node.js + Socket.io + Frontend)
 ├── k8s/                   # Kubernetes Manifests (App, Service, Ingress)
 ├── networking/            # Root Terraform Module
 │   ├── main.tf            # Logic to wire VNet, AKS, ACR, and DB
@@ -81,7 +81,50 @@ If the dashboard code changes, follow these steps:
 
 ---
 
-## 4. Recent Troubleshooting & Fixes
+## 4. Real-Time Observability (WebSocket Layer)
+
+The dashboard has been upgraded from a static frontend to a **full-stack real-time application**.
+
+### Architecture
+```
+Browser (index.html)
+   ↕  WebSocket (socket.io)
+Node.js Backend (server.js)
+   ↕  @kubernetes/client-node
+Kubernetes API Server
+```
+
+### Key Dependencies
+| Package | Purpose |
+|---------|--------|
+| `express` | Serves static files and REST endpoints |
+| `socket.io` | Bidirectional WebSocket communication |
+| `@kubernetes/client-node` | Queries the Kubernetes API from Node.js |
+
+### How It Works
+1. `server.js` creates an HTTP server with Socket.io attached.
+2. Every **2 seconds**, it calls `k8sApi.listNamespacedPod("default")` and emits the pod list to all connected clients.
+3. The frontend receives the `pods` event and:
+   - Renders a **card per pod** in the Cluster Nodes tab (name, status, IP, node).
+   - Updates the **Pod Counter** card on the Overview tab.
+   - Detects scaling events and writes HPA log entries to the terminal stream.
+
+### Scaling State Detection
+| Pod Count Change | UI Tag | Terminal Log |
+|------------------|--------|--------------|
+| Increased | `SCALING UP` (amber, pulsing) | `HPA Triggered: Scaling from N → M pods` |
+| Decreased | `SCALING DOWN` (blue) | `Workload decreased: Scaling down to N pods` |
+| No change | `STABLE` (teal) | — |
+
+### Load Testing (Trigger Scaling)
+```bash
+ab -n 20000 -c 200 http://<APP_GATEWAY_IP>/
+```
+This generates enough traffic to trigger the HPA, which scales pods up. The dashboard reflects the scaling in real-time.
+
+---
+
+## 5. Recent Troubleshooting & Fixes
 
 ### Fix 1: `fortress_web` Rollout Failure
 - **Issue**: Pods stuck in `ImagePullBackOff`.
@@ -99,9 +142,10 @@ If the dashboard code changes, follow these steps:
 
 ---
 
-## 5. Status and Verification
+## 6. Status and Verification
 
 - **Dashboard URL**: `http://<app_gateway_public_ip>`
+- **Real-Time Updates**: Pod data refreshes every 2 seconds via WebSocket.
 - **Backend Health**: All replicas are "Ready" and joined to the Application Gateway's backend pool.
 - **Database**: Reachable only from within the VNet via its private FQDN.
 - **ACR**: Fully integrated with AKS for secure ImagePull.

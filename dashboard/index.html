@@ -6,6 +6,7 @@
     <title>Fortress Cyber-Ops Hub</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <div class="cyber-bg"></div>
@@ -87,13 +88,13 @@
                             <span class="dot"></span> 12 Active Conn.
                         </div>
                     </div>
-                    <div class="cyber-card gateway">
+                    <div class="cyber-card pods">
                         <div class="card-glow"></div>
-                        <span class="tag">ONLINE</span>
-                        <div class="icon">🚀</div>
-                        <h3>App Gateway</h3>
-                        <p>WAF protection enabled</p>
-                        <div class="value-text">99.9% Uptime</div>
+                        <span class="tag" id="pod-scaling-tag">STABLE</span>
+                        <div class="icon">📦</div>
+                        <h3>Pod Counter</h3>
+                        <p>Active Workload Instances</p>
+                        <div class="value-text" id="total-pods-count">0</div>
                     </div>
                 </div>
 
@@ -261,7 +262,71 @@
             document.getElementById('node-info').classList.add('active');
         }
 
-        // --- Real-time Logic ---
+        // --- Real-time Logic via WebSockets ---
+        const socket = io();
+        
+        socket.on("pods", (pods) => {
+            updatePodUI(pods);
+            updatePodCounter(pods);
+        });
+
+        function updatePodUI(pods) {
+            const grid = document.getElementById('nodes-grid');
+            grid.innerHTML = '';
+            
+            pods.forEach(pod => {
+                const card = document.createElement('div');
+                card.className = `node-card ${pod.status.toLowerCase()}`;
+                card.innerHTML = `
+                    <div class="node-header">
+                        <div class="node-icon">📦</div>
+                        <div class="node-meta">
+                            <h4>${pod.name}</h4>
+                            <span class="node-ip">${pod.ip || 'Pending...'}</span>
+                        </div>
+                    </div>
+                    <div class="node-stats">
+                        <div class="stat">
+                            <span class="label">STATUS</span>
+                            <span class="val status-text">${pod.status}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="label">NODE</span>
+                            <span class="val">${pod.node || 'Scheduling...'}</span>
+                        </div>
+                    </div>
+                    <div class="node-footer">
+                        <div class="pulse-ring"></div>
+                        <span class="live-tag">LIVE TELEMETRY</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        let lastPodCount = 0;
+        function updatePodCounter(pods) {
+            const countElem = document.getElementById('total-pods-count');
+            const tagElem = document.getElementById('pod-scaling-tag');
+            const count = pods.length;
+            
+            countElem.textContent = count;
+            
+            if (count > lastPodCount && lastPodCount !== 0) {
+                tagElem.textContent = 'SCALING UP';
+                tagElem.className = 'tag scaling-up';
+                writeToTerminal(`HPA Triggered: Scaling from ${lastPodCount} to ${count} pods`, 'warn');
+            } else if (count < lastPodCount) {
+                tagElem.textContent = 'SCALING DOWN';
+                tagElem.className = 'tag scaling-down';
+                writeToTerminal(`Workload decreased: Scaling down to ${count} pods`, 'info');
+            } else {
+                tagElem.textContent = 'STABLE';
+                tagElem.className = 'tag';
+            }
+            lastPodCount = count;
+        }
+
         function writeToTerminal(msg, type = 'info') {
             const term = document.getElementById('terminal-stream');
             const line = document.createElement('div');
@@ -296,11 +361,8 @@
 
         async function fetchStats() {
             try {
-                const res = await fetch('/api/cluster-stats');
-                const data = await res.json();
-                
-                // Update UI with real/mock data
-                const cpu = data.estimatedCpuUsage || Math.floor(Math.random() * 20) + 15;
+                // Keep simulation for other metrics like CPU/Latency
+                const cpu = Math.floor(Math.random() * 20) + 15;
                 document.getElementById('cpu-val').textContent = cpu + '%';
                 document.getElementById('cpu-fill').style.width = cpu + '%';
                 
@@ -311,14 +373,8 @@
                 const queries = Math.floor(Math.random() * 5) + 10;
                 document.getElementById('query-val').textContent = queries;
                 document.getElementById('query-fill').style.width = (queries * 5) + '%';
-
-                if (Math.random() > 0.8) {
-                    const logs = ["Autoscaling event detected: +1 pod", "ACR image pull successful", "Database backup completed", "WAF blocked suspicious header"];
-                    writeToTerminal(logs[Math.floor(Math.random() * logs.length)], 'info');
-                }
             } catch (e) {
-                // Failover to mock data if API unavailable
-                writeToTerminal('API Connection lost. Using cached telemetry.', 'warn');
+                console.error('Telemetry error:', e);
             }
         }
 

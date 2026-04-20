@@ -34,6 +34,7 @@ networking/          → Step 2: the actual infrastructure
     database/        → PostgreSQL server
     redis/           → Redis Cache (Standard C1)
     bastion/         → Azure Bastion for secure access
+dashboard/               → Custom monitoring dashboard + Node.js real-time API
 .github/workflows/   → automatic deploy on GitHub push
 ```
 
@@ -99,6 +100,40 @@ Creates the network foundation.
 
 **variables.tf** — what this module needs as input.
 **outputs.tf** — exports subnet IDs and VNet ID for other modules to use.
+
+---
+
+## Dashboard: Real-Time Observability Layer
+
+The dashboard is a **full-stack application** running as a Pod inside AKS:
+
+```
+Browser (UI)
+   ↕  WebSocket (socket.io)
+Node.js Server (server.js)
+   ↕  @kubernetes/client-node
+Kubernetes API Server
+   ↓
+Pod list / Events / Node data
+```
+
+**Backend** (`server.js`):
+- Uses `http` + `socket.io` for real-time bidirectional communication.
+- Queries `k8sApi.listNamespacedPod("default")` every **2 seconds** and broadcasts the result to all connected clients via `io.emit("pods", pods)`.
+- Loads kubeconfig via `kc.loadFromDefault()` locally, or `kc.loadFromCluster()` when running inside AKS.
+
+**Frontend** (`index.html`):
+- `socket.on("pods", ...)` receives live pod snapshots and:
+  - Renders a **pod card** per pod in the "Cluster Nodes" tab (status, IP, node name).
+  - Updates the **Pod Counter** card on the Overview tab.
+  - Detects scaling events (pod count change) and writes `HPA Triggered: Scaling from N → M pods` into the operational log stream.
+
+**Scaling Tag Logic**:
+| State | Tag shown | Color |
+|-------|-----------|-------|
+| Count increased | `SCALING UP` | Amber, animated pulse |
+| Count decreased | `SCALING DOWN` | Blue |
+| No change | `STABLE` | Default teal |
 
 ---
 

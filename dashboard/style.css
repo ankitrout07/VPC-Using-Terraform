@@ -258,3 +258,121 @@ body {
 .tab-pane.active { display: block; }
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Pod Counter Card ── */
+.cyber-card.pods { border-color: rgba(139, 92, 246, 0.3); }
+.cyber-card.pods:hover { border-color: var(--accent-purple); }
+.cyber-card.pods .value-text {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-top: 1rem;
+}
+
+/* ── Scaling Tags ── */
+.tag.scaling-up {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.15);
+    animation: tagPulse 1s infinite;
+}
+.tag.scaling-down {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.15);
+}
+@keyframes tagPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ── Value Text (shared) ── */
+.value-text { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 1rem; }
+
+/* ── Status Indicator dot ── */
+.status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-top: 1rem; color: var(--text-dim); }
+.status-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+
+/* ── Nodes Grid ── */
+.nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+/* ── Pod Node Card ── */
+.node-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+    animation: slideUp 0.4s ease-out;
+}
+.node-card:hover { transform: translateY(-4px); border-color: var(--accent-teal); }
+
+.node-card.running { border-left: 3px solid var(--success); }
+.node-card.pending { border-left: 3px solid #fbbf24; }
+.node-card.failed  { border-left: 3px solid var(--danger); }
+
+.node-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
+.node-icon { font-size: 2rem; }
+.node-meta h4 { font-size: 0.9rem; font-weight: 700; color: #fff; word-break: break-all; }
+.node-ip { font-size: 0.75rem; color: var(--accent-teal); font-family: 'JetBrains Mono', monospace; }
+
+.node-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+.node-stats .stat { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 0.6rem 0.8rem; }
+.node-stats .stat .label { display: block; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 0.3rem; }
+.node-stats .stat .val { font-size: 0.8rem; font-weight: 700; color: #fff; word-break: break-all; }
+.node-stats .stat .status-text.running { color: var(--success); }
+.node-stats .stat .status-text.pending { color: #fbbf24; }
+.node-stats .stat .status-text.failed  { color: var(--danger); }
+
+.node-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 1rem;
+}
+.live-tag { font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; color: var(--accent-teal); }
+
+/* ── Pulse Ring ── */
+.pulse-ring {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    position: relative;
+    flex-shrink: 0;
+}
+.pulse-ring::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-teal);
+    animation: ringPulse 1.5s ease-out infinite;
+}
+@keyframes ringPulse {
+    0%   { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ── Cluster Badge & Cost Badge ── */
+.cluster-badge {
+    display: flex; align-items: center; gap: 0.6rem;
+    background: rgba(0,242,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: 10px; padding: 0.6rem 1.2rem; font-size: 0.85rem; font-weight: 600;
+}
+.cluster-badge .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success); animation: pulse 2s infinite;
+}
+.cost-badge {
+    display: flex; flex-direction: column; align-items: center;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+    border-radius: 10px; padding: 0.5rem 1rem;
+}
+.cost-badge .label { font-size: 0.55rem; color: var(--text-dim); font-weight: 800; letter-spacing: 1px; }
+.cost-badge .value { font-size: 1rem; font-weight: 800; color: #fff; }

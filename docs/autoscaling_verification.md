@@ -60,3 +60,40 @@ Look for `status:` and `ReadableStatus:` in the output to see if it's currently 
   ```bash
   az aks show --resource-group YOUR_RG --name YOUR_AKS_NAME --query "agentPoolProfiles[0].count"
   ```
+
+---
+
+## 4. Visual Verification via Real-Time Dashboard
+
+The Fortress dashboard now provides **live visual verification** of autoscaling events via WebSocket.
+
+### What to Watch
+1. **Overview Tab → Pod Counter Card**: Shows the current pod count with a large animated number.
+2. **Scaling State Tag**: Changes dynamically:
+   - 🟢 `STABLE` — pod count unchanged
+   - 🟡 `SCALING UP` (pulsing animation) — HPA added new pods
+   - 🔵 `SCALING DOWN` — pods being terminated after load subsides
+3. **Cluster Nodes Tab**: Each pod renders as a live card with status, IP, and node assignment.
+4. **Operational Terminal**: Auto-logs scaling events, e.g.:
+   ```
+   [12:34:56] > HPA Triggered: Scaling from 2 → 8 pods
+   [12:40:12] > Workload decreased: Scaling down to 2 pods
+   ```
+
+### End-to-End Test Flow
+```
+ApacheBench → Application Gateway → AKS → HPA Scales Pods → Dashboard Shows Changes (WebSocket)
+```
+
+```bash
+# 1. Open the dashboard in browser
+open http://<APP_GATEWAY_IP>/
+
+# 2. Switch to Overview or Cluster Nodes tab
+
+# 3. In a separate terminal, generate load:
+ab -n 20000 -c 200 http://<APP_GATEWAY_IP>/
+
+# 4. Watch the Pod Counter increase and tags animate in real-time
+```
+

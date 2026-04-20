@@ -40,8 +40,9 @@ Manual cloud management leads to "Configuration Drift," where environments vary 
     *   **Security**: Application Gateway (Standard_v2/WAF_v2), Azure Bastion, NSGs.
     *   **Storage/Data**: Azure Database for PostgreSQL (Flexible Server), Azure Cache for Redis, ACR.
 *   **Frontend/Observability**:
-    *   **Stack**: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript (Real-time WebSockets simulation).
-    *   **Visualization**: SVG-based dynamic topology maps, Chart.js for telemetry.
+    *   **Stack**: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript, Node.js (Express + Socket.io).
+    *   **Real-time Data**: `@kubernetes/client-node` library for live Kubernetes API queries; Socket.io WebSockets for push-based pod updates every 2 seconds.
+    *   **Visualization**: SVG-based dynamic topology maps, live pod-card grid, animated scaling-state indicators.
 
 ---
 
@@ -97,18 +98,28 @@ The VNet is segmented into 6 logical tiers:
 *   **NSG Lockdown**: Default "Deny All" rules with granular "Allow" rules for inter-subnet communication.
 *   **Managed Identities**: No passwords or secrets are stored in code; AKS uses User-Assigned Identities to pull images from ACR.
 
-#### C. Real-time Dashboard
-The dashboard uses the `@kubernetes/client-node` library to communicate directly with the AKS control plane, fetching:
-*   **Pod Distribution**: Shows running vs. failed pods.
-*   **Node Telemetry**: Live CPU and RAM usage from every node.
-*   **Event Stream**: Real-time Kubernetes events (Killed pods, Pulling images).
+#### C. Real-time Dashboard (WebSocket-Powered)
+The dashboard is a full-stack Node.js application running inside AKS. The backend (`server.js`) uses `@kubernetes/client-node` to query the Kubernetes API every 2 seconds and pushes results to all connected browsers via **Socket.io WebSockets**.
+
+**Data Flow:**
+```
+Browser ←→ Socket.io ←→ Node.js Server ←→ Kubernetes API Server
+```
+
+**Live Features:**
+*   **Pod Counter Card**: Displays the real pod count on the Overview tab with animated scaling-state tags (`SCALING UP` / `SCALING DOWN` / `STABLE`).
+*   **Pod Card Grid**: The "Cluster Nodes" tab renders a card for each pod showing name, status, IP, and assigned node — updated in real-time.
+*   **Scaling Event Log**: Automatic terminal entries when pod count changes (e.g., `HPA Triggered: Scaling from 2 → 8 pods`).
+*   **Node Telemetry**: Live CPU and RAM usage from every cluster node.
 
 ---
 
 ### 8. Sample Outputs
-*   **Interactive Network Map**: Visualizes the flow from Gateway -> AKS -> Postgres.
+*   **Interactive Network Map**: Visualizes the flow from Gateway -> AKS -> Postgres with animated data-flow particles.
+*   **Live Pod Grid**: Real-time pod cards with status colors (green = Running, amber = Pending, red = Failed).
+*   **Scaling State Indicator**: Animated tag on the Pod Counter card that transitions between `STABLE`, `SCALING UP`, and `SCALING DOWN`.
 *   **Security Scan Engine**: An interactive feature that simulates a full network audit.
-*   **Operational Terminal**: Provides a pro-hacker feel for real-time log monitoring.
+*   **Operational Terminal**: Real-time log stream showing scaling events, ACR pulls, and WAF blocks.
 *   **Cost Tracker**: Estimates the monthly burn rate based on deployed resources.
 
 ---
@@ -131,6 +142,8 @@ The dashboard uses the `@kubernetes/client-node` library to communicate directly
 ---
 
 ### 11. Future Scope
+*   **Load-Test Demonstration**: Use ApacheBench (`ab -n 20000 -c 200 http://<APP_GATEWAY_IP>/`) to trigger HPA scaling and visualize pod count changes live on the dashboard.
+*   **Metrics-Server Integration**: Replace simulated CPU/RAM metrics with real data from the Kubernetes Metrics API (`metrics.k8s.io`).
 *   **GitOps with ArgoCD**: Automate application updates whenever code is pushed to GitHub.
 *   **Multi-Region DR**: Deploy a standby environment in `West US` with active-passive failover.
 *   **Service Mesh (Istio)**: Implement mTLS between pods for "Encryption in Transit" across the cluster.
