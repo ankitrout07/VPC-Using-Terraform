@@ -16,6 +16,11 @@ const port = 80;
 
 app.use(express.static(path.join(__dirname)));
 
+// Root health check for App Gateway default probes
+app.get('/', (req, res) => {
+    res.status(200).send('Fortress Dashboard OK');
+});
+
 const kc = new k8s.KubeConfig();
 try {
     kc.loadFromDefault();

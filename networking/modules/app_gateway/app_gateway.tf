@@ -44,8 +44,13 @@ resource "azurerm_application_gateway" "main" {
   }
 
   frontend_port {
-    name = local.frontend_port_name
+    name = "${local.frontend_port_name}-80"
     port = 80
+  }
+
+  frontend_port {
+    name = "${local.frontend_port_name}-placeholder"
+    port = 8888
   }
 
   frontend_ip_configuration {
@@ -67,18 +72,18 @@ resource "azurerm_application_gateway" "main" {
   }
 
   http_listener {
-    name                           = local.listener_name
+    name                           = "${local.listener_name}-placeholder"
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
-    frontend_port_name             = local.frontend_port_name
+    frontend_port_name             = "${local.frontend_port_name}-placeholder"
     protocol                       = "Http"
   }
 
-  # This is a "Default" rule that will be overridden or supplemented by AGIC
+  # This is a "Placeholder" rule that stays out of AGIC's way
   request_routing_rule {
-    name                       = "default-rule"
+    name                       = "placeholder-rule"
     priority                   = 1
     rule_type                  = "Basic"
-    http_listener_name         = local.listener_name
+    http_listener_name         = "${local.listener_name}-placeholder"
     backend_address_pool_name  = local.backend_address_pool_name
     backend_http_settings_name = local.http_setting_name
   }

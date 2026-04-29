@@ -106,10 +106,10 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
 }
 
 # AGIC Role Assignments
-# 1. Grant Reader to the Resource Group
-resource "azurerm_role_assignment" "agic_rg_reader" {
+# 1. Grant Contributor to the Resource Group (Required for full AGIC lifecycle management)
+resource "azurerm_role_assignment" "agic_rg_contributor" {
   scope                = module.networking.resource_group_id
-  role_definition_name = "Reader"
+  role_definition_name = "Contributor"
   principal_id         = module.aks.ingress_identity_id
 }
 

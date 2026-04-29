@@ -94,6 +94,19 @@ resource "kubernetes_deployment" "fortress_web" {
             }
           }
 
+          env {
+            name  = "DB_HOST"
+            value = module.database.db_server_fqdn
+          }
+          env {
+            name  = "REDIS_HOST"
+            value = module.redis.redis_hostname
+          }
+          env {
+            name  = "REDIS_KEY"
+            value = module.redis.redis_primary_access_key
+          }
+
           readiness_probe {
             http_get {
               path = "/api/health"
@@ -145,7 +158,7 @@ resource "kubernetes_ingress_v1" "fortress_ingress" {
     annotations = {
       "kubernetes.io/ingress.class"                       = "azure/application-gateway"
       "appgw.ingress.kubernetes.io/backend-path-prefix"   = "/"
-      "appgw.ingress.kubernetes.io/health-probe-path"     = "/api/health"
+      "appgw.ingress.kubernetes.io/health-probe-path"     = "/"
       "appgw.ingress.kubernetes.io/success-codes"         = "200-399"
     }
   }
@@ -173,7 +186,7 @@ resource "kubernetes_ingress_v1" "fortress_ingress" {
 
   # Ensure Backend sync happens AFTER these role assignments take effect
   depends_on = [
-    azurerm_role_assignment.agic_rg_reader,
+    azurerm_role_assignment.agic_rg_contributor,
     azurerm_role_assignment.agic_appgw_contributor,
     azurerm_role_assignment.agic_vnet_contributor
   ]
