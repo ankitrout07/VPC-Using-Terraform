@@ -157,23 +157,28 @@
                             <text x="80" y="40" fill="var(--text-dim)" font-size="14" font-weight="600">AZURE VNET - CENTRAL INDIA (10.0.0.0/16)</text>
 
                             <!-- Flow Lines -->
-                            <g class="flows">
-                                <!-- Internet to Gateway -->
-                                <path id="flow1" d="M 120 300 L 280 300" stroke="rgba(0, 242, 255, 0.1)" stroke-width="2" fill="none" />
-                                <circle r="4" fill="var(--accent-teal)" filter="url(#glow)">
-                                    <animateMotion dur="2s" repeatCount="indefinite" path="M 120 300 L 280 300" />
+                                        <!-- Internet to Gateway -->
+                                <path id="flow1" class="flow-path" d="M 120 300 L 280 300" stroke="var(--accent-teal)" stroke-width="2" fill="none" style="--flow-speed: 2s" />
+                                <circle r="2" class="particle">
+                                    <animateMotion id="anim1" dur="2s" repeatCount="indefinite" path="M 120 300 L 280 300" />
                                 </circle>
-
+                                
                                 <!-- Gateway to AKS -->
-                                <path id="flow2" d="M 360 300 L 520 180" stroke="rgba(0, 242, 255, 0.1)" stroke-width="2" fill="none" />
-                                <circle r="3" fill="var(--accent-teal)" filter="url(#glow)">
-                                    <animateMotion dur="2.5s" repeatCount="indefinite" path="M 360 300 L 520 180" />
+                                <path id="flow2" class="flow-path" d="M 360 300 L 520 180" stroke="var(--accent-teal)" stroke-width="2" fill="none" style="--flow-speed: 2.5s" />
+                                <circle r="2" class="particle">
+                                    <animateMotion id="anim2" dur="2.5s" repeatCount="indefinite" path="M 360 300 L 520 180" />
                                 </circle>
 
                                 <!-- AKS to DB -->
-                                <path id="flow3" d="M 600 180 L 800 400" stroke="rgba(0, 255, 170, 0.1)" stroke-width="2" fill="none" />
-                                <circle r="3" fill="var(--success)" filter="url(#glow)">
-                                    <animateMotion dur="3s" repeatCount="indefinite" path="M 600 180 L 800 400" />
+                                <path id="flow3" class="flow-path" d="M 600 180 L 800 400" stroke="var(--success)" stroke-width="2" fill="none" style="--flow-speed: 3s" />
+                                <circle r="2" class="particle">
+                                    <animateMotion id="anim3" dur="3s" repeatCount="indefinite" path="M 600 180 L 800 400" />
+                                </circle>
+
+                                <!-- AKS to Redis -->
+                                <path id="flow4" class="flow-path" d="M 560 230 L 560 300" stroke="#ff0055" stroke-width="2" stroke-dasharray="5 5" fill="none" style="--flow-speed: 4s" />
+                                <circle r="1.5" fill="#ff0055">
+                                    <animateMotion id="anim4" dur="4s" repeatCount="indefinite" path="M 560 230 L 560 300" />
                                 </circle>
                             </g>
 
@@ -190,12 +195,14 @@
                             </g>
 
                             <g class="node aks" onclick="showNode('AKS Cluster')">
+                                <circle id="aks-pulse" class="node-pulse-ring active" cx="560" cy="180" r="50" />
                                 <circle cx="560" cy="180" r="50" fill="#000" stroke="var(--accent-purple)" stroke-width="2" filter="url(#glow)" />
                                 <text x="560" y="185" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">AKS</text>
                                 <text x="560" y="205" text-anchor="middle" fill="var(--accent-purple)" font-size="10">APP TIER</text>
                             </g>
 
                             <g class="node db" onclick="showNode('PostgreSQL')">
+                                <circle id="db-pulse" class="node-pulse-ring active" cx="840" cy="400" r="50" />
                                 <circle cx="840" cy="400" r="50" fill="#000" stroke="var(--success)" stroke-width="2" filter="url(#glow)" />
                                 <text x="840" y="405" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">DB</text>
                                 <text x="840" y="425" text-anchor="middle" fill="var(--success)" font-size="10">DATA TIER</text>
@@ -220,10 +227,10 @@
                 </div>
             </section>
 
-            <!-- Nodes Tab (Placeholder) -->
+            <!-- Nodes Tab -->
             <section id="nodes" class="tab-pane">
-                <div class="nodes-grid" id="nodes-grid">
-                    <!-- Nodes injected here -->
+                <div class="tetris-container" id="tetris-map">
+                    <!-- Nodes blocks injected here -->
                 </div>
             </section>
         </main>
@@ -231,6 +238,53 @@
 
     <div id="scanner-line" class="scanner-line"></div>
     <div id="toast-container" class="toast-container"></div>
+
+    <!-- Detail Pane -->
+    <div id="detail-pane" class="detail-pane">
+        <div class="pane-close" onclick="closeDetailPane()">×</div>
+        <div class="pane-header">
+            <h4 id="pane-subtitle">NODE DETAIL</h4>
+            <h2 id="pane-title">Worker-Node-01</h2>
+        </div>
+        
+        <div class="detail-section">
+            <h4>Live Status</h4>
+            <div class="detail-row">
+                <span class="label">Lifecycle</span>
+                <span id="pane-status" class="pod-status-chip">Running</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Vortex ID</span>
+                <span id="pane-vortex" class="val">VX-772-ALPHA</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Uptime</span>
+                <span id="pane-uptime" class="val">14d 6h 22m</span>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4>Security Manifest</h4>
+            <div class="detail-row">
+                <span class="label">Image Hash</span>
+                <span id="pane-hash" class="val image-hash">sha256:8f3c...9e21</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Namespace</span>
+                <span id="pane-ns" class="val">production</span>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4>Hardware Layer</h4>
+            <div class="mini-graph" style="height: 40px; margin-top: 1rem;">
+                <div class="bar" style="height: 40%"></div>
+                <div class="bar" style="height: 60%"></div>
+                <div class="bar" style="height: 50%"></div>
+                <div class="bar" style="height: 80%"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function updateClock() { document.getElementById('live-clock').textContent = new Date().toLocaleTimeString(); }
@@ -265,43 +319,83 @@
         // --- Real-time Logic via WebSockets ---
         const socket = io();
         
-        socket.on("pods", (pods) => {
-            updatePodUI(pods);
-            updatePodCounter(pods);
+        socket.on("clusterData", (data) => {
+            updateTetrisMap(data);
+            updatePodCounter(data.pods);
         });
 
-        function updatePodUI(pods) {
-            const grid = document.getElementById('nodes-grid');
-            grid.innerHTML = '';
+        function updateTetrisMap(data) {
+            const container = document.getElementById('tetris-map');
+            container.innerHTML = '';
             
-            pods.forEach(pod => {
-                const card = document.createElement('div');
-                card.className = `node-card ${pod.status.toLowerCase()}`;
-                card.innerHTML = `
-                    <div class="node-header">
-                        <div class="node-icon">📦</div>
-                        <div class="node-meta">
-                            <h4>${pod.name}</h4>
-                            <span class="node-ip">${pod.ip || 'Pending...'}</span>
-                        </div>
+            data.nodes.forEach(node => {
+                const block = document.createElement('div');
+                block.className = 'node-block';
+                block.onclick = () => showNodeDetails(node, data.pods.filter(p => p.node === node.name));
+                
+                const nodePods = data.pods.filter(p => p.node === node.name);
+                const hasError = nodePods.some(p => p.status !== 'Running' && p.status !== 'Succeeded');
+                if (hasError) block.classList.add('glitch-error');
+
+                block.innerHTML = `
+                    <div class="node-block-header">
+                        <div class="node-block-name">${node.name}</div>
+                        <div class="tag ${node.status === 'Ready' ? '' : 'scaling-down'}">${node.status}</div>
                     </div>
-                    <div class="node-stats">
-                        <div class="stat">
-                            <span class="label">STATUS</span>
-                            <span class="val status-text">${pod.status}</span>
-                        </div>
-                        <div class="stat">
-                            <span class="label">NODE</span>
-                            <span class="val">${pod.node || 'Scheduling...'}</span>
-                        </div>
-                    </div>
-                    <div class="node-footer">
-                        <div class="pulse-ring"></div>
-                        <span class="live-tag">LIVE TELEMETRY</span>
+                    <div class="pod-grid">
+                        ${renderPods(nodePods, node.capacity)}
                     </div>
                 `;
-                grid.appendChild(card);
+                container.appendChild(block);
             });
+        }
+
+        function renderPods(pods, capacity) {
+            let html = '';
+            for (let i = 0; i < capacity; i++) {
+                const pod = pods[i];
+                let className = 'pod-square empty';
+                let name = 'Empty Slot';
+                let action = '';
+                
+                if (pod) {
+                    className = `pod-square ${pod.type}`;
+                    if (pod.status !== 'Running' && pod.status !== 'Succeeded') className += ' glitch-error';
+                    name = pod.name;
+                    action = `onclick="event.stopPropagation(); showPodDetails('${pod.name}', '${pod.namespace}', '${pod.status}')"`;
+                }
+                
+                html += `<div class="${className}" data-pod-name="${name}" ${action}></div>`;
+            }
+            return html;
+        }
+
+        function showNodeDetails(node, pods) {
+            document.getElementById('pane-subtitle').textContent = 'NODE DETAIL';
+            document.getElementById('pane-title').textContent = node.name;
+            document.getElementById('pane-status').textContent = node.status;
+            document.getElementById('pane-status').className = `pod-status-chip ${node.status === 'Ready' ? '' : 'failed'}`;
+            document.getElementById('pane-vortex').textContent = `VX-${Math.random().toString(36).substring(7).toUpperCase()}`;
+            document.getElementById('pane-uptime').textContent = '24d 12h 4m';
+            document.getElementById('pane-hash').textContent = 'N/A (Physical Node)';
+            document.getElementById('pane-ns').textContent = 'N/A';
+            document.getElementById('detail-pane').classList.add('active');
+        }
+
+        function showPodDetails(name, ns, status) {
+            document.getElementById('pane-subtitle').textContent = 'POD DETAIL';
+            document.getElementById('pane-title').textContent = name;
+            document.getElementById('pane-status').textContent = status;
+            document.getElementById('pane-status').className = `pod-status-chip ${status === 'Running' ? '' : 'failed'}`;
+            document.getElementById('pane-vortex').textContent = `PX-${Math.random().toString(36).substring(7).toUpperCase()}`;
+            document.getElementById('pane-uptime').textContent = '2h 14m 5s';
+            document.getElementById('pane-hash').textContent = `sha256:${Math.random().toString(16).substring(2, 10)}...`;
+            document.getElementById('pane-ns').textContent = ns;
+            document.getElementById('detail-pane').classList.add('active');
+        }
+
+        function closeDetailPane() {
+            document.getElementById('detail-pane').classList.remove('active');
         }
 
         let lastPodCount = 0;
@@ -369,6 +463,28 @@
                 const latency = Math.floor(Math.random() * 15) + 18;
                 document.getElementById('latency-val').textContent = latency + 'ms';
                 document.getElementById('latency-fill').style.width = (latency * 2) + '%';
+
+                // Traffic Speed and Pulse Color Logic
+                const flows = document.querySelectorAll('.flow-path');
+                const speed = Math.max(0.5, 4 - (latency / 10)); // Higher latency = slower dots
+                flows.forEach(f => f.style.setProperty('--flow-speed', speed + 's'));
+
+                // Sync SVG particles with latency
+                document.querySelectorAll('animateMotion').forEach(anim => {
+                    anim.setAttribute('dur', speed + 's');
+                });
+
+                const aksPulse = document.getElementById('aks-pulse');
+                const dbPulse = document.getElementById('db-pulse');
+                
+                if (latency > 27) {
+                    aksPulse.classList.add('amber');
+                    dbPulse.classList.add('amber');
+                    writeToTerminal(`High Latency Detected: ${latency}ms. Switching to Amber alert.`, 'warn');
+                } else {
+                    aksPulse.classList.remove('amber');
+                    dbPulse.classList.remove('amber');
+                }
 
                 const queries = Math.floor(Math.random() * 5) + 10;
                 document.getElementById('query-val').textContent = queries;

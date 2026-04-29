@@ -34,11 +34,13 @@ body {
 .grid-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-color: transparent;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05), transparent),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='rgba(0, 242, 255, 0.07)' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 56px 100px;
     z-index: -1;
-    mask-image: radial-gradient(circle at center, black, transparent 80%);
+    mask-image: radial-gradient(circle at center, black, transparent 90%);
 }
 
 .app-shell { display: flex; height: 100vh; }
@@ -231,11 +233,35 @@ body {
 .progress-bar.danger .fill { background: var(--danger); }
 
 /* ── Topology ── */
-.topology-container { height: 600px; position: relative; }
-.topology-stage { background: #010409; border-radius: 32px; height: 100%; border: 1px solid var(--glass-border); }
+.topology-container { 
+    height: 600px; 
+    position: relative; 
+    perspective: 1200px; 
+}
+
+.topology-stage { 
+    background: #010409; 
+    border-radius: 32px; 
+    height: 100%; 
+    border: 1px solid var(--glass-border);
+    transform-style: preserve-3d;
+    transform: rotateX(25deg) rotateZ(-12deg);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+}
+
+.topology-stage:hover {
+    transform: rotateX(15deg) rotateZ(-5deg) scale(1.02);
+}
 
 .node { cursor: pointer; transition: 0.3s; }
-.node:hover { filter: drop-shadow(0 0 15px var(--accent-teal)); transform: scale(1.05); }
+.node:hover { filter: drop-shadow(0 0 25px var(--accent-teal)); }
+
+/* ── Particle Pulse ── */
+.particle {
+    fill: #fff;
+    filter: url(#glow);
+}
 
 .node-info-card {
     position: absolute; top: 2rem; right: 2rem;
@@ -249,6 +275,40 @@ body {
 .info-content .row { display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.8rem; }
 .info-content .val { font-weight: 700; color: #fff; }
 .info-content .val.green { color: var(--success); }
+.info-content .val.amber { color: #fbbf24; }
+
+/* ── Traffic Flow Animation ── */
+.flow-path {
+    stroke-dasharray: 10, 100;
+    stroke-dashoffset: 0;
+    animation: flowMove var(--flow-speed, 3s) linear infinite;
+    stroke-linecap: round;
+}
+
+@keyframes flowMove {
+    to { stroke-dashoffset: -110; }
+}
+
+/* ── Node Ping Pulse ── */
+.node-pulse-ring {
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 2;
+    opacity: 0;
+}
+
+.node-pulse-ring.active {
+    animation: nodePing 2s ease-out infinite;
+}
+
+.node-pulse-ring.amber {
+    stroke: #fbbf24;
+}
+
+@keyframes nodePing {
+    0% { transform: scale(1); opacity: 0.8; stroke-width: 4; }
+    100% { transform: scale(1.5); opacity: 0; stroke-width: 1; }
+}
 
 /* ── Animations ── */
 .pulse { animation: pulse 2s infinite; }
@@ -283,6 +343,58 @@ body {
     background: rgba(96, 165, 250, 0.15);
 }
 @keyframes tagPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ── Glitch Effect ── */
+.glitch-error {
+    animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;
+    border-color: var(--danger) !important;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0); text-shadow: -2px 0 var(--accent-teal), 2px 0 var(--danger); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); text-shadow: 2px 0 var(--accent-teal), -2px 0 var(--danger); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); text-shadow: -2px 0 var(--accent-teal), 2px 0 var(--danger); }
+    100% { transform: translate(0); }
+}
+
+/* ── Slide-over Detail Pane ── */
+.detail-pane {
+    position: fixed;
+    top: 0; right: -450px; width: 400px; height: 100vh;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(30px);
+    border-left: 1px solid var(--accent-teal);
+    z-index: 3000;
+    padding: 3rem;
+    transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+}
+
+.detail-pane.active { right: 0; }
+
+.pane-header { margin-bottom: 3rem; }
+.pane-header h2 { font-size: 1.8rem; font-weight: 800; color: var(--accent-teal); }
+.pane-close { position: absolute; top: 2rem; right: 2rem; cursor: pointer; font-size: 1.5rem; opacity: 0.5; transition: 0.3s; }
+.pane-close:hover { opacity: 1; transform: rotate(90deg); }
+
+.detail-section { margin-bottom: 2.5rem; }
+.detail-section h4 { font-size: 0.7rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 1rem; text-transform: uppercase; }
+.detail-row { display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.detail-row .label { color: var(--text-dim); font-size: 0.85rem; }
+.detail-row .val { color: #fff; font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+
+.pod-status-chip {
+    padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.7rem; font-weight: 800;
+    background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success);
+}
+
+.pod-status-chip.failed {
+    background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: var(--danger);
+}
+
+.image-hash { font-size: 0.7rem !important; opacity: 0.7; }
 
 /* ── Value Text (shared) ── */
 .value-text { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 1rem; }
@@ -337,6 +449,89 @@ body {
     padding-top: 1rem;
 }
 .live-tag { font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; color: var(--accent-teal); }
+
+/* ── Tetris Node Map ── */
+.tetris-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.node-block {
+    background: rgba(15, 23, 42, 0.4);
+    border: 2px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 320px;
+    position: relative;
+    transition: 0.3s;
+}
+
+.node-block:hover {
+    border-color: var(--accent-teal);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.node-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.node-block-name {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.pod-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+}
+
+.pod-square {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: 0.3s;
+    position: relative;
+}
+
+.pod-square.system {
+    background: #3b82f6; /* Blue */
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.pod-square.app {
+    background: #a855f7; /* Purple */
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+.pod-square.empty {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pod-square:hover::after {
+    content: attr(data-pod-name);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+    margin-bottom: 5px;
+    pointer-events: none;
+}
 
 /* ── Pulse Ring ── */
 .pulse-ring {
