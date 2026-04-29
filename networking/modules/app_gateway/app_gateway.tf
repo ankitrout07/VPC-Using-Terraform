@@ -61,7 +61,7 @@ resource "azurerm_application_gateway" "main" {
     name                  = local.http_setting_name
     cookie_based_affinity = "Disabled"
     path                  = "/"
-    port                                = 80
+    port                                = 3000
     protocol                            = "Http"
     request_timeout                     = 60
     probe_name                          = "fortress-health-probe"

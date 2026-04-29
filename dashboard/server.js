@@ -12,7 +12,7 @@ const io = socketIo(server, {
         methods: ["GET", "POST"]
     }
 });
-const port = 80;
+const port = 3000;
 
 app.use(express.static(path.join(__dirname)));
 

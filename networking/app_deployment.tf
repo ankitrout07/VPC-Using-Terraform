@@ -84,7 +84,7 @@ resource "kubernetes_deployment" "fortress_web" {
           image = docker_registry_image.dashboard.name
 
           port {
-            container_port = 80
+            container_port = 3000
           }
 
           resources {
@@ -114,18 +114,18 @@ resource "kubernetes_deployment" "fortress_web" {
           readiness_probe {
             http_get {
               path = "/health"
-              port = 80
+              port = 3000
             }
-            initial_delay_seconds = 5
+            initial_delay_seconds = 10
             period_seconds        = 10
           }
 
           liveness_probe {
             http_get {
               path = "/health"
-              port = 80
+              port = 3000
             }
-            initial_delay_seconds = 15
+            initial_delay_seconds = 20
             period_seconds        = 20
           }
         }
@@ -148,7 +148,7 @@ resource "kubernetes_service" "fortress_service" {
     port {
       protocol    = "TCP"
       port        = 80
-      target_port = 80
+      target_port = 3000
     }
 
     type = "ClusterIP"
@@ -164,6 +164,9 @@ resource "kubernetes_ingress_v1" "fortress_ingress" {
       "appgw.ingress.kubernetes.io/health-probe-path"     = "/health"
       "appgw.ingress.kubernetes.io/success-codes"         = "200-399"
       "appgw.ingress.kubernetes.io/use-private-ip"        = "false"
+      "appgw.ingress.kubernetes.io/backend-protocol"      = "http"
+      "appgw.ingress.kubernetes.io/override-frontend-port" = "80"
+      "appgw.ingress.kubernetes.io/backend-hostname"      = "fortress.local"
     }
   }
 
