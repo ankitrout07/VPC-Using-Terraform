@@ -1,15 +1,22 @@
 :root {
-    --bg-dark: #020617;
-    --bg-panel: rgba(15, 23, 42, 0.6);
-    --accent-teal: #00f2ff;
-    --accent-purple: #8b5cf6;
-    --accent-glow: rgba(0, 242, 255, 0.3);
-    --text-primary: #f8fafc;
-    --text-dim: #94a3b8;
+    --bg-dark: #0B1021;
+    --bg-panel: rgba(15, 23, 42, 0.4);
+    --accent-teal: #06B6D4;
+    --accent-purple: #8B5CF6;
+    --accent-glow: rgba(6, 182, 212, 0.4);
+    --text-primary: #F8FAFC;
+    --text-dim: #94A3B8;
     --glass-border: rgba(255, 255, 255, 0.08);
-    --danger: #ef4444;
-    --success: #10b981;
+    --danger: #EF4444;
+    --success: #10B981;
     --font-main: 'Outfit', sans-serif;
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,9 +33,25 @@ body {
 .cyber-bg {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle at 10% 10%, rgba(0, 242, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
-    z-index: -1;
+    background: radial-gradient(circle at center, #0B1021 0%, #03050A 100%);
+    z-index: -3;
+}
+
+.orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -2;
+    animation: float 20s infinite ease-in-out alternate;
+    pointer-events: none;
+}
+.orb-1 { width: 40vw; height: 40vw; background: rgba(6, 182, 212, 0.15); top: -10vw; left: -10vw; animation-delay: 0s; }
+.orb-2 { width: 35vw; height: 35vw; background: rgba(139, 92, 246, 0.15); bottom: -10vw; right: -10vw; animation-delay: -5s; }
+.orb-3 { width: 30vw; height: 30vw; background: rgba(16, 185, 129, 0.1); top: 40vh; left: 40vw; animation-delay: -10s; }
+
+@keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(5vw, 5vh) scale(1.1); }
 }
 
 .grid-overlay {
@@ -36,8 +59,8 @@ body {
     top: 0; left: 0; width: 100%; height: 100%;
     background-color: transparent;
     background-image: 
-        radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05), transparent),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='rgba(0, 242, 255, 0.07)' stroke-width='1'/%3E%3C/svg%3E");
+        radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.03), transparent),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='rgba(255, 255, 255, 0.03)' stroke-width='1'/%3E%3C/svg%3E");
     background-size: 56px 100px;
     z-index: -1;
     mask-image: radial-gradient(circle at center, black, transparent 90%);
@@ -202,10 +225,16 @@ body {
     border-radius: 24px;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(24px) saturate(150%);
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02), 0 8px 32px rgba(0, 0, 0, 0.2);
     transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.cyber-card:hover { transform: translateY(-8px); border-color: var(--accent-teal); }
+.cyber-card:hover { 
+    transform: translateY(-8px) scale(1.02); 
+    border-color: rgba(6, 182, 212, 0.5); 
+    box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.05), 0 12px 40px rgba(0, 0, 0, 0.4);
+}
 .card-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); opacity: 0; transition: 0.4s; }
 .cyber-card:hover .card-glow { opacity: 1; }
 
@@ -218,7 +247,7 @@ body {
 
 /* ── Telemetry ── */
 .telemetry-row { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
-.panel { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2rem; }
+.panel { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2rem; backdrop-filter: blur(24px) saturate(150%); box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02), 0 8px 32px rgba(0, 0, 0, 0.2); }
 
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
 .event-list { list-style: none; }

@@ -10,6 +10,9 @@
 </head>
 <body>
     <div class="cyber-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
     <div class="grid-overlay"></div>
 
     <div class="app-shell">
@@ -17,7 +20,7 @@
         <aside class="sidebar">
             <div class="logo-area">
                 <div class="logo-shield"></div>
-                <h1>FORTRESS</h1>
+                <h1 class="gradient-text">FORTRESS</h1>
             </div>
             <nav class="nav-menu">
                 <li class="nav-item active" onclick="switchTab('overview')">📊 Overview</li>
@@ -37,17 +40,17 @@
         <main class="main-stage">
             <header class="stage-header">
                 <div>
-                    <h2 id="stage-title">Infrastructure Overview</h2>
+                    <h2 id="stage-title" class="gradient-text">Infrastructure Overview</h2>
                     <p class="subtitle">Global Operations Dashboard</p>
                 </div>
                 <div class="header-actions">
                     <button class="action-btn scan-btn" onclick="startSecurityScan()">
                         <span class="btn-icon">🛡️</span> Run Security Scan
                     </button>
-                    <button class="action-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); box-shadow: none;" onclick="toggleGatewayFailure()">
+                    <button class="action-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); box-shadow: none; backdrop-filter: blur(10px);" onclick="toggleGatewayFailure()">
                         ⚠️ Fail Gateway
                     </button>
-                    <div class="cost-badge">
+                    <div class="cost-badge" style="backdrop-filter: blur(10px);">
                         <span class="label">EST. COST</span>
                         <span class="value">$142.40/mo</span>
                     </div>
