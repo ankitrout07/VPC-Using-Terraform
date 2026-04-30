@@ -2,8 +2,7 @@ name: Deploy Infrastructure and App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -13,6 +12,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Explicit mapping to resolve "Not all values are present" error
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -37,17 +37,10 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-        working-directory: ./networking
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+      - name: Terraform Plan & Apply
+        run: |
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
         working-directory: ./networking
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -57,35 +50,30 @@ jobs:
 
       - name: Get Terraform Outputs
         run: |
+          cd ./networking
           echo "RG=$(terraform output -raw resource_group_name)" >> $GITHUB_ENV
           echo "AKS=$(terraform output -raw aks_cluster_name)" >> $GITHUB_ENV
           echo "ACR=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
-        working-directory: ./networking
 
-      - name: AKS Get Credentials
+      - name: Build Docker Image
         run: |
-          az aks get-credentials --resource-group ${{ env.RG }} --name ${{ env.AKS }} --overwrite-existing
+          docker build -t ${{ env.ACR }}/fortress-dashboard:${{ github.sha }} ./dashboard
 
-      - name: Login to ACR
+      - name: Login to ACR & Push
         run: |
           ACR_NAME=$(echo ${{ env.ACR }} | cut -d. -f1)
           az acr login --name $ACR_NAME
+          docker push ${{ env.ACR }}/fortress-dashboard:${{ github.sha }}
 
-      - name: Build and Push Docker Image
+      - name: Deploy to AKS
         run: |
-          ACR_NAME=$(echo ${{ env.ACR }} | cut -d. -f1)
-          docker build -t ${{ env.ACR }}/fortress-dashboard:latest ./dashboard
-          docker push ${{ env.ACR }}/fortress-dashboard:latest
-
-      - name: Update K8s Manifests
-        run: |
-          sed -i 's|image: .*|image: ${{ env.ACR }}/fortress-dashboard:latest|' k8s/fortress-app.yaml
-
-      - name: Deploy App to AKS
-        run: kubectl apply -f k8s/
+          az aks get-credentials --resource-group ${{ env.RG }} --name ${{ env.AKS }} --overwrite-existing
+          sed -i 's|image: .*|image: ${{ env.ACR }}/fortress-dashboard:${{ github.sha }}|' k8s/fortress-app.yaml
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/fortress-web --timeout=300s
 
       - name: Verify Deployment
         run: |
-          kubectl get nodes
           kubectl get pods -n default
           kubectl get svc -n default
+          kubectl get ingress -n default
