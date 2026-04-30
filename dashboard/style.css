@@ -607,3 +607,79 @@ body.failed-gateway .node.gateway rect { stroke: var(--danger) !important; }
 }
 .cost-badge .label { font-size: 0.55rem; color: var(--text-dim); font-weight: 800; letter-spacing: 1px; }
 .cost-badge .value { font-size: 1rem; font-weight: 800; color: #fff; }
+
+/* ── Redesigned Network Map ── */
+.netmap-shell { display: flex; gap: 2rem; height: 600px; }
+.netmap-canvas { 
+    flex: 2; 
+    background: #010409; 
+    border-radius: 24px; 
+    border: 1px solid var(--glass-border); 
+    position: relative; 
+    overflow: hidden; 
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+}
+.nm-node { transition: 0.3s; }
+.nm-node:hover { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(255,255,255,0.2)); }
+.nm-legend { 
+    position: absolute; bottom: 20px; left: 20px; 
+    display: flex; gap: 1rem; 
+    background: rgba(15,23,42,0.8); 
+    padding: 0.8rem 1.2rem; border-radius: 12px; 
+    border: 1px solid var(--glass-border); 
+    font-size: 0.75rem; color: var(--text-dim); 
+}
+.nm-legend-item { display: flex; align-items: center; gap: 0.5rem; }
+.nm-legend-item span { display: inline-block; width: 12px; height: 3px; border-radius: 2px; }
+
+.nm-detail-panel { 
+    flex: 1; 
+    display: flex; flex-direction: column; gap: 1.5rem; 
+}
+.nm-detail-header { 
+    background: var(--bg-panel); border: 1px solid var(--glass-border); 
+    padding: 1.5rem; border-radius: 24px; 
+    display: flex; align-items: center; gap: 1.2rem; 
+}
+.nm-detail-icon { font-size: 2.5rem; }
+.nm-detail-title { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem; }
+.nm-detail-sub { font-size: 0.8rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.nm-detail-body { 
+    background: var(--bg-panel); border: 1px solid var(--glass-border); 
+    padding: 1.5rem; border-radius: 24px; flex: 1; 
+}
+.nm-hint { color: var(--text-dim); font-style: italic; font-size: 0.9rem; }
+
+.nm-traffic-panel { 
+    background: var(--bg-panel); border: 1px solid var(--glass-border); 
+    padding: 1.5rem; border-radius: 24px; 
+}
+.nm-traffic-title { font-weight: 800; margin-bottom: 1rem; color: #fff; font-size: 1rem; }
+.nm-traffic-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+.nm-traffic-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; }
+.nm-bar-wrap { height: 6px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+.nm-bar-fill { height: 100%; border-radius: 4px; transition: 0.5s; }
+.nm-bar-fill.teal { background: var(--accent-teal); }
+.nm-bar-fill.purple { background: var(--accent-purple); }
+.nm-bar-fill.green { background: var(--success); }
+
+/* ── Architecture Tab ── */
+.arch-container { padding: 1rem 0; }
+.arch-header { margin-bottom: 3rem; }
+.arch-header h3 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
+.arch-header p { color: var(--text-dim); font-size: 1rem; }
+.tech-stack-grid { 
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; 
+}
+.tech-list { 
+    list-style: none; margin-top: 1rem; 
+    font-size: 0.85rem; color: var(--text-dim); 
+    display: flex; flex-direction: column; gap: 0.8rem; 
+}
+.tech-list li { padding-left: 1rem; position: relative; line-height: 1.5; }
+.tech-list li::before { 
+    content: ''; position: absolute; left: 0; top: 0.5rem; 
+    width: 6px; height: 6px; border-radius: 50%; 
+    background: var(--accent-teal); 
+}
+.tech-list strong { color: #fff; }

@@ -23,6 +23,7 @@
                 <li class="nav-item active" onclick="switchTab('overview')">📊 Overview</li>
                 <li class="nav-item" onclick="switchTab('network')">🕸️ Network Map</li>
                 <li class="nav-item" onclick="switchTab('nodes')">🖥️ Cluster Nodes</li>
+                <li class="nav-item" onclick="switchTab('arch')">🏗️ Architecture</li>
                 <li class="nav-item" onclick="switchTab('security')">🛡️ Security Logs</li>
             </nav>
             <div class="sidebar-footer">
@@ -143,86 +144,212 @@
                 </div>
             </section>
 
-            <!-- Network Tab -->
+            <!-- Network Tab (Redesigned) -->
             <section id="network" class="tab-pane">
-                <div class="topology-container">
-                    <div class="topology-stage">
-                        <svg width="100%" height="100%" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+                <div class="netmap-shell">
+                    <!-- Left: Topology Canvas -->
+                    <div class="netmap-canvas">
+                        <svg id="netmap-svg" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
                             <defs>
-                                <filter id="glow">
-                                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                <filter id="ng" x="-40%" y="-40%" width="180%" height="180%">
+                                    <feGaussianBlur stdDeviation="4" result="blur"/>
+                                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                                 </filter>
+                                <filter id="ng-sm" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
+                                <linearGradient id="teal-grad" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#00f5d4"/>
+                                    <stop offset="100%" stop-color="#0077ff"/>
+                                </linearGradient>
+                                <linearGradient id="purple-grad" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#a855f7"/>
+                                    <stop offset="100%" stop-color="#6366f1"/>
+                                </linearGradient>
+                                <marker id="arrow-teal" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                    <path d="M0,0 L6,3 L0,6 Z" fill="#00f5d4" opacity="0.7"/>
+                                </marker>
+                                <marker id="arrow-purple" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                    <path d="M0,0 L6,3 L0,6 Z" fill="#a855f7" opacity="0.7"/>
+                                </marker>
+                                <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                    <path d="M0,0 L6,3 L0,6 Z" fill="#10b981" opacity="0.7"/>
+                                </marker>
+                                <marker id="arrow-red" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                    <path d="M0,0 L6,3 L0,6 Z" fill="#ef4444" opacity="0.7"/>
+                                </marker>
                             </defs>
 
-                            <!-- Subnet Grouping -->
-                            <rect x="50" y="50" width="900" height="500" rx="30" fill="rgba(255,255,255,0.01)" stroke="rgba(255,255,255,0.05)" stroke-dasharray="10 10" />
-                            <text x="80" y="40" fill="var(--text-dim)" font-size="14" font-weight="600">AZURE VNET - CENTRAL INDIA (10.0.0.0/16)</text>
+                            <!-- VNet Boundary -->
+                            <rect x="130" y="20" width="810" height="520" rx="20"
+                                fill="rgba(0,245,212,0.02)" stroke="rgba(0,245,212,0.15)"
+                                stroke-dasharray="8 6" stroke-width="1.5"/>
+                            <text x="155" y="45" fill="rgba(0,245,212,0.5)" font-size="11" font-family="JetBrains Mono,monospace" font-weight="600">AZURE VNET — CENTRAL INDIA — 10.0.0.0/16</text>
 
-                            <!-- Flow Lines -->
-                                        <!-- Internet to Gateway -->
-                                <path id="flow1" class="flow-path" d="M 120 300 L 280 300" stroke="var(--accent-teal)" stroke-width="2" fill="none" style="--flow-speed: 2s" />
-                                <circle r="2" class="particle">
-                                    <animateMotion id="anim1" dur="2s" repeatCount="indefinite" path="M 120 300 L 280 300" />
+                            <!-- Zone Labels -->
+                            <text x="155" y="100" fill="rgba(255,255,255,0.18)" font-size="9" font-family="JetBrains Mono,monospace">PUBLIC ZONE</text>
+                            <text x="155" y="240" fill="rgba(168,85,247,0.4)" font-size="9" font-family="JetBrains Mono,monospace">APP ZONE</text>
+                            <text x="155" y="380" fill="rgba(16,185,129,0.4)" font-size="9" font-family="JetBrains Mono,monospace">DATA ZONE</text>
+                            <text x="155" y="500" fill="rgba(239,68,68,0.4)" font-size="9" font-family="JetBrains Mono,monospace">CACHE ZONE</text>
+
+                            <!-- Zone separators -->
+                            <line x1="145" y1="115" x2="920" y2="115" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="4 6"/>
+                            <line x1="145" y1="255" x2="920" y2="255" stroke="rgba(168,85,247,0.1)" stroke-width="1" stroke-dasharray="4 6"/>
+                            <line x1="145" y1="390" x2="920" y2="390" stroke="rgba(16,185,129,0.1)" stroke-width="1" stroke-dasharray="4 6"/>
+
+                            <!-- ── FLOW PATHS ─────────────────────────────────── -->
+                            <!-- Internet → AppGW -->
+                            <path d="M 65 160 C 100 160, 130 160, 220 160"
+                                stroke="url(#teal-grad)" stroke-width="2" fill="none" opacity="0.6"
+                                marker-end="url(#arrow-teal)"/>
+                            <circle r="3" fill="#00f5d4">
+                                <animateMotion dur="1.8s" repeatCount="indefinite" path="M 65 160 C 100 160, 130 160, 220 160"/>
+                            </circle>
+
+                            <!-- AppGW → Bastion (side) -->
+                            <path d="M 300 120 C 300 90, 600 90, 730 120"
+                                stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none" stroke-dasharray="5 4"
+                                marker-end="url(#arrow-teal)"/>
+
+                            <!-- AppGW → AKS -->
+                            <path d="M 300 180 C 390 180, 420 280, 490 290"
+                                stroke="url(#teal-grad)" stroke-width="2" fill="none" opacity="0.7"
+                                marker-end="url(#arrow-teal)"/>
+                            <circle r="3" fill="#00f5d4">
+                                <animateMotion dur="2.2s" repeatCount="indefinite" path="M 300 180 C 390 180, 420 280, 490 290"/>
+                            </circle>
+
+                            <!-- AKS → Postgres -->
+                            <path d="M 570 310 C 620 340, 650 400, 700 415"
+                                stroke="url(#purple-grad)" stroke-width="2" fill="none" opacity="0.7"
+                                marker-end="url(#arrow-purple)"/>
+                            <circle r="3" fill="#a855f7">
+                                <animateMotion dur="2.8s" repeatCount="indefinite" path="M 570 310 C 620 340, 650 400, 700 415"/>
+                            </circle>
+
+                            <!-- AKS → Redis -->
+                            <path d="M 570 320 C 640 360, 700 470, 720 460"
+                                stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.5"
+                                stroke-dasharray="6 4" marker-end="url(#arrow-red)"/>
+                            <circle r="2.5" fill="#ef4444">
+                                <animateMotion dur="3.2s" repeatCount="indefinite" path="M 570 320 C 640 360, 700 470, 720 460"/>
+                            </circle>
+
+                            <!-- Postgres → ACR -->
+                            <path d="M 800 415 C 840 415, 860 290, 860 280"
+                                stroke="rgba(16,185,129,0.3)" stroke-width="1" fill="none" stroke-dasharray="4 5"/>
+
+                            <!-- ── NODES ──────────────────────────────────────── -->
+
+                            <!-- Internet (outside VNet) -->
+                            <g class="nm-node" onclick="nmSelect('internet')" style="cursor:pointer">
+                                <circle cx="65" cy="160" r="38" fill="#0a0a14" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" filter="url(#ng-sm)"/>
+                                <text x="65" y="154" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="18">🌐</text>
+                                <text x="65" y="170" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9" font-family="JetBrains Mono,monospace">INTERNET</text>
+                            </g>
+
+                            <!-- App Gateway / WAF -->
+                            <g class="nm-node" onclick="nmSelect('appgw')" style="cursor:pointer">
+                                <rect x="215" y="125" width="90" height="70" rx="14"
+                                    fill="#0a0a14" stroke="#00f5d4" stroke-width="2" filter="url(#ng)"/>
+                                <circle cx="260" cy="140" r="3" fill="#00f5d4" opacity="0.8">
+                                    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
                                 </circle>
-                                
-                                <!-- Gateway to AKS -->
-                                <path id="flow2" class="flow-path" d="M 360 300 L 520 180" stroke="var(--accent-teal)" stroke-width="2" fill="none" style="--flow-speed: 2.5s" />
-                                <circle r="2" class="particle">
-                                    <animateMotion id="anim2" dur="2.5s" repeatCount="indefinite" path="M 360 300 L 520 180" />
-                                </circle>
-
-                                <!-- AKS to DB -->
-                                <path id="flow3" class="flow-path" d="M 600 180 L 800 400" stroke="var(--success)" stroke-width="2" fill="none" style="--flow-speed: 3s" />
-                                <circle r="2" class="particle">
-                                    <animateMotion id="anim3" dur="3s" repeatCount="indefinite" path="M 600 180 L 800 400" />
-                                </circle>
-
-                                <!-- AKS to Redis -->
-                                <path id="flow4" class="flow-path" d="M 560 230 L 560 300" stroke="#ff0055" stroke-width="2" stroke-dasharray="5 5" fill="none" style="--flow-speed: 4s" />
-                                <circle r="1.5" fill="#ff0055">
-                                    <animateMotion id="anim4" dur="4s" repeatCount="indefinite" path="M 560 230 L 560 300" />
-                                </circle>
-                            <!-- Nodes -->
-                            <g class="node internet" onclick="showNode('Internet')">
-                                <circle cx="80" cy="300" r="45" fill="#000" stroke="var(--text-dim)" stroke-width="2" />
-                                <text x="80" y="305" text-anchor="middle" fill="#fff" font-size="12">Internet</text>
+                                <text x="260" y="158" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="Outfit,sans-serif">WAF v2</text>
+                                <text x="260" y="172" text-anchor="middle" fill="#00f5d4" font-size="9" font-family="JetBrains Mono,monospace">APP GATEWAY</text>
+                                <text x="260" y="185" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="8" font-family="JetBrains Mono,monospace">10.0.40.0/24</text>
                             </g>
 
-                            <g class="node gateway" onclick="showNode('App Gateway')">
-                                <rect x="280" y="255" width="80" height="90" rx="15" fill="#000" stroke="var(--accent-teal)" stroke-width="2" filter="url(#glow)" />
-                                <text x="320" y="295" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">WAF v2</text>
-                                <text x="320" y="315" text-anchor="middle" fill="var(--accent-teal)" font-size="10">GATEWAY</text>
+                            <!-- Bastion -->
+                            <g class="nm-node" onclick="nmSelect('bastion')" style="cursor:pointer">
+                                <rect x="690" y="55" width="80" height="60" rx="12"
+                                    fill="#0a0a14" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                                <text x="730" y="82" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="18">🔐</text>
+                                <text x="730" y="97" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="JetBrains Mono,monospace">BASTION</text>
+                                <text x="730" y="108" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="8" font-family="JetBrains Mono,monospace">10.0.50.0/24</text>
                             </g>
 
-                            <g class="node aks" onclick="showNode('AKS Cluster')">
-                                <circle id="aks-pulse" class="node-pulse-ring active" cx="560" cy="180" r="50" />
-                                <circle cx="560" cy="180" r="50" fill="#000" stroke="var(--accent-purple)" stroke-width="2" filter="url(#glow)" />
-                                <text x="560" y="185" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">AKS</text>
-                                <text x="560" y="205" text-anchor="middle" fill="var(--accent-purple)" font-size="10">APP TIER</text>
+                            <!-- AKS -->
+                            <g class="nm-node" onclick="nmSelect('aks')" style="cursor:pointer">
+                                <circle id="aks-pulse" class="node-pulse-ring active" cx="530" cy="290" r="52"/>
+                                <circle cx="530" cy="290" r="52" fill="#0a0a14" stroke="url(#purple-grad)" stroke-width="2.5" filter="url(#ng)"/>
+                                <text x="530" y="282" text-anchor="middle" fill="#fff" font-size="15" font-weight="800" font-family="Outfit,sans-serif">AKS</text>
+                                <text x="530" y="298" text-anchor="middle" fill="#a855f7" font-size="9" font-family="JetBrains Mono,monospace">KUBERNETES</text>
+                                <text x="530" y="311" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="8" font-family="JetBrains Mono,monospace">10.0.10.0/24</text>
                             </g>
 
-                            <g class="node db" onclick="showNode('PostgreSQL')">
-                                <circle id="db-pulse" class="node-pulse-ring active" cx="840" cy="400" r="50" />
-                                <circle cx="840" cy="400" r="50" fill="#000" stroke="var(--success)" stroke-width="2" filter="url(#glow)" />
-                                <text x="840" y="405" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">DB</text>
-                                <text x="840" y="425" text-anchor="middle" fill="var(--success)" font-size="10">DATA TIER</text>
+                            <!-- ACR -->
+                            <g class="nm-node" onclick="nmSelect('acr')" style="cursor:pointer">
+                                <rect x="820" y="248" width="80" height="60" rx="12"
+                                    fill="#0a0a14" stroke="rgba(0,119,255,0.6)" stroke-width="1.5" filter="url(#ng-sm)"/>
+                                <text x="860" y="276" text-anchor="middle" fill="rgba(0,180,255,0.9)" font-size="18">📦</text>
+                                <text x="860" y="292" text-anchor="middle" fill="rgba(0,180,255,0.6)" font-size="9" font-family="JetBrains Mono,monospace">ACR</text>
+                                <text x="860" y="303" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="8" font-family="JetBrains Mono,monospace">REGISTRY</text>
                             </g>
 
-                            <g class="node redis" onclick="showNode('Redis')">
-                                <rect x="520" y="300" width="80" height="40" rx="10" fill="#000" stroke="#ff0055" stroke-width="2" />
-                                <text x="560" y="325" text-anchor="middle" fill="#fff" font-size="10">REDIS</text>
+                            <!-- PostgreSQL -->
+                            <g class="nm-node" onclick="nmSelect('db')" style="cursor:pointer">
+                                <circle id="db-pulse" class="node-pulse-ring active" cx="755" cy="430" r="42"/>
+                                <circle cx="755" cy="430" r="42" fill="#0a0a14" stroke="#10b981" stroke-width="2" filter="url(#ng)"/>
+                                <text x="755" y="422" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Outfit,sans-serif">PG</text>
+                                <text x="755" y="436" text-anchor="middle" fill="#10b981" font-size="9" font-family="JetBrains Mono,monospace">POSTGRES</text>
+                                <text x="755" y="449" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="8" font-family="JetBrains Mono,monospace">10.0.20.0/24</text>
                             </g>
+
+                            <!-- Redis -->
+                            <g class="nm-node" onclick="nmSelect('redis')" style="cursor:pointer">
+                                <rect x="695" y="440" width="80" height="50" rx="12"
+                                    fill="#0a0a14" stroke="#ef4444" stroke-width="1.5" filter="url(#ng-sm)"/>
+                                <text x="735" y="462" text-anchor="middle" fill="rgba(255,80,80,0.9)" font-size="16">⚡</text>
+                                <text x="735" y="478" text-anchor="middle" fill="#ef4444" font-size="9" font-family="JetBrains Mono,monospace">REDIS CACHE</text>
+                            </g>
+
+                            <!-- NSG Badge -->
+                            <rect x="145" y="195" width="55" height="18" rx="5" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>
+                            <text x="172" y="207" text-anchor="middle" fill="#ef4444" font-size="8" font-family="JetBrains Mono,monospace">NSG ACTIVE</text>
                         </svg>
+
+                        <!-- Legend -->
+                        <div class="nm-legend">
+                            <div class="nm-legend-item"><span style="background:#00f5d4"></span>Public Traffic</div>
+                            <div class="nm-legend-item"><span style="background:#a855f7"></span>App ↔ Data</div>
+                            <div class="nm-legend-item"><span style="background:#ef4444"></span>Cache Channel</div>
+                            <div class="nm-legend-item"><span style="border:1px dashed rgba(255,255,255,0.3); background:transparent"></span>Admin Path</div>
+                        </div>
                     </div>
 
-                    <div id="node-info" class="node-info-card">
-                        <h4 id="info-title">Select an Instance</h4>
-                        <div class="info-content">
-                            <div class="row"><span>Status:</span> <span class="val green">Operational</span></div>
-                            <div class="row"><span>Subnet:</span> <span id="info-subnet">-</span></div>
-                            <div class="row"><span>IP:</span> <span id="info-ip">-</span></div>
-                            <div class="row"><span>Protection:</span> <span id="info-sec">-</span></div>
+                    <!-- Right: Node Detail Panel -->
+                    <div class="nm-detail-panel">
+                        <div class="nm-detail-header">
+                            <div class="nm-detail-icon" id="nm-icon">🗺️</div>
+                            <div>
+                                <div class="nm-detail-title" id="nm-title">Select a Node</div>
+                                <div class="nm-detail-sub" id="nm-sub">Click any node on the map</div>
+                            </div>
+                        </div>
+                        <div class="nm-detail-body" id="nm-body">
+                            <div class="nm-hint">← Click any component on the topology map to inspect it.</div>
+                        </div>
+
+                        <!-- Live Traffic Panel -->
+                        <div class="nm-traffic-panel">
+                            <div class="nm-traffic-title">⚡ Live Traffic</div>
+                            <div class="nm-traffic-row">
+                                <span>Ingress Req/s</span>
+                                <span class="nm-traffic-val" id="nm-rps">—</span>
+                            </div>
+                            <div class="nm-bar-wrap"><div class="nm-bar-fill teal" id="nm-rps-bar" style="width:0%"></div></div>
+                            <div class="nm-traffic-row" style="margin-top:10px">
+                                <span>Gateway Latency</span>
+                                <span class="nm-traffic-val" id="nm-lat">—</span>
+                            </div>
+                            <div class="nm-bar-wrap"><div class="nm-bar-fill purple" id="nm-lat-bar" style="width:0%"></div></div>
+                            <div class="nm-traffic-row" style="margin-top:10px">
+                                <span>DB Connections</span>
+                                <span class="nm-traffic-val" id="nm-dbc">—</span>
+                            </div>
+                            <div class="nm-bar-wrap"><div class="nm-bar-fill green" id="nm-dbc-bar" style="width:0%"></div></div>
                         </div>
                     </div>
                 </div>
@@ -232,6 +359,85 @@
             <section id="nodes" class="tab-pane">
                 <div class="tetris-container" id="tetris-map">
                     <!-- Nodes blocks injected here -->
+                </div>
+            </section>
+            <!-- Architecture Tab -->
+            <section id="arch" class="tab-pane">
+                <div class="arch-container">
+                    <div class="arch-header">
+                        <h3>Project Architecture & Tech Stack</h3>
+                        <p>Fully automated, highly available infrastructure deployed on Azure</p>
+                    </div>
+                    
+                    <div class="tech-stack-grid">
+                        <div class="cyber-card">
+                            <div class="card-glow"></div>
+                            <div class="icon">🏗️</div>
+                            <h3>Infrastructure as Code</h3>
+                            <ul class="tech-list">
+                                <li><strong>Terraform:</strong> Core provisioning engine (v1.5.0+)</li>
+                                <li><strong>AzureRM Provider:</strong> Manages all Azure resources</li>
+                                <li><strong>Modular Design:</strong> Networking, AKS, App Gateway, Database, Redis, and Bastion isolated in reusable modules</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="cyber-card">
+                            <div class="card-glow"></div>
+                            <div class="icon">🕸️</div>
+                            <h3>Networking & Security</h3>
+                            <ul class="tech-list">
+                                <li><strong>VNet:</strong> Custom isolated 10.0.0.0/16 network</li>
+                                <li><strong>Subnet Tiers:</strong> Public, App, Data, Cache, Gateway, Bastion</li>
+                                <li><strong>App Gateway (WAF v2):</strong> Ingress controller with Web Application Firewall</li>
+                                <li><strong>Bastion:</strong> Secure RDP/SSH without public IPs on VMs</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="cyber-card">
+                            <div class="card-glow"></div>
+                            <div class="icon">⚙️</div>
+                            <h3>Compute & Workloads</h3>
+                            <ul class="tech-list">
+                                <li><strong>Azure Kubernetes Service (AKS):</strong> Orchestration of application containers</li>
+                                <li><strong>Azure Container Registry (ACR):</strong> Private Docker image storage</li>
+                                <li><strong>NodeJS / Express:</strong> Real-time backend dashboard server</li>
+                                <li><strong>Socket.io:</strong> WebSocket communication for live metrics</li>
+                            </ul>
+                        </div>
+
+                        <div class="cyber-card">
+                            <div class="card-glow"></div>
+                            <div class="icon">🗄️</div>
+                            <h3>Data & State</h3>
+                            <ul class="tech-list">
+                                <li><strong>PostgreSQL Flexible Server:</strong> Relational data storage</li>
+                                <li><strong>Azure Cache for Redis:</strong> High-speed data caching</li>
+                                <li><strong>Azure Blob Storage:</strong> Remote Terraform state backend for team collaboration</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="cyber-card">
+                            <div class="card-glow"></div>
+                            <div class="icon">🚀</div>
+                            <h3>CI/CD Pipeline</h3>
+                            <ul class="tech-list">
+                                <li><strong>GitHub Actions:</strong> Automated build and deployment</li>
+                                <li><strong>Idempotent Workflow:</strong> `terraform plan -detailed-exitcode` prevents empty applies</li>
+                                <li><strong>Content Hashing:</strong> Docker images tagged via SHA1 of source files</li>
+                            </ul>
+                        </div>
+
+                        <div class="cyber-card">
+                            <div class="card-glow"></div>
+                            <div class="icon">🎨</div>
+                            <h3>Frontend UI</h3>
+                            <ul class="tech-list">
+                                <li><strong>Vanilla HTML/CSS/JS:</strong> Zero-dependency, lightweight interface</li>
+                                <li><strong>SVG + CSS Animations:</strong> Live network map with pulsing data flow</li>
+                                <li><strong>Glassmorphism:</strong> Modern, cyber-ops aesthetic</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -306,26 +512,49 @@
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
-            const titles = { overview: 'Infrastructure Overview', network: 'Network Topology', nodes: 'Compute Resources', security: 'Security Logs' };
+            const titles = { overview: 'Infrastructure Overview', network: 'Live Network Map', nodes: 'Compute Resources', arch: 'Architecture & Tech Stack', security: 'Security Logs' };
             document.getElementById('stage-title').textContent = titles[tabId];
         }
 
-        const nodes = {
-            'Internet': { subnet: 'Public', ip: 'Any', sec: 'N/A' },
-            'App Gateway': { subnet: 'GatewaySubnet', ip: '10.0.40.0/24', sec: 'WAF v2 Policy' },
-            'AKS Cluster': { subnet: 'AppSubnet', ip: '10.0.10.0/24', sec: 'NSG + Private Link' },
-            'PostgreSQL': { subnet: 'DBSubnet', ip: '10.0.20.0/24', sec: 'Delegated Subnet' },
-            'Redis': { subnet: 'RedisSubnet', ip: '10.0.30.0/24', sec: 'Private Endpoint' }
+        const nmNodes = {
+            'internet': { name: 'Public Internet', sub: 'External', icon: '🌐', hint: 'Unsecured public traffic origination.' },
+            'appgw': { name: 'App Gateway (WAF)', sub: '10.0.40.0/24', icon: '🛡️', hint: 'Ingress controller filtering layer 7 traffic.' },
+            'bastion': { name: 'Azure Bastion', sub: '10.0.50.0/24', icon: '🔐', hint: 'Secure jump-host for VM administration.' },
+            'aks': { name: 'AKS App Cluster', sub: '10.0.10.0/24', icon: '⚙️', hint: 'Scalable container workloads handling logic.' },
+            'db': { name: 'PostgreSQL Server', sub: '10.0.20.0/24', icon: '🗄️', hint: 'Persistent relational data storage.' },
+            'acr': { name: 'Container Registry', sub: 'Azure PaaS', icon: '📦', hint: 'Private image repository.' },
+            'redis': { name: 'Redis Cache', sub: '10.0.30.0/24', icon: '⚡', hint: 'High-speed ephemeral data caching.' }
         };
 
-        function showNode(name) {
-            const data = nodes[name];
-            document.getElementById('info-title').textContent = name;
-            document.getElementById('info-subnet').textContent = data.subnet;
-            document.getElementById('info-ip').textContent = data.ip;
-            document.getElementById('info-sec').textContent = data.sec;
-            document.getElementById('node-info').classList.add('active');
+        function nmSelect(id) {
+            const data = nmNodes[id];
+            if (!data) return;
+            document.getElementById('nm-icon').textContent = data.icon;
+            document.getElementById('nm-title').textContent = data.name;
+            document.getElementById('nm-sub').textContent = data.sub;
+            document.getElementById('nm-body').innerHTML = `
+                <div class="info-content">
+                    <div class="row"><span>Status:</span> <span class="val green">Operational</span></div>
+                    <div class="row"><span>Network:</span> <span class="val">${data.sub}</span></div>
+                    <div class="row" style="margin-top:1.5rem; color:var(--text-dim); line-height:1.4;">${data.hint}</div>
+                </div>
+            `;
+            
+            // Highlight node visually
+            document.querySelectorAll('.nm-node').forEach(n => n.style.opacity = '0.4');
+            event.currentTarget.style.opacity = '1';
         }
+        
+        // Reset selection when clicking SVG background
+        document.getElementById('netmap-svg').addEventListener('click', (e) => {
+            if (e.target.tagName === 'svg') {
+                document.querySelectorAll('.nm-node').forEach(n => n.style.opacity = '1');
+                document.getElementById('nm-icon').textContent = '🗺️';
+                document.getElementById('nm-title').textContent = 'Select a Node';
+                document.getElementById('nm-sub').textContent = 'Click any node on the map';
+                document.getElementById('nm-body').innerHTML = '<div class="nm-hint">← Click any component on the topology map to inspect it.</div>';
+            }
+        });
 
         // --- Real-time Logic via WebSockets ---
         const socket = io();
@@ -512,6 +741,18 @@
                 const queries = Math.floor(Math.random() * 5) + 10;
                 document.getElementById('query-val').textContent = queries;
                 document.getElementById('query-fill').style.width = (queries * 5) + '%';
+                
+                // Update live traffic panel on Network Map
+                const rps = Math.floor(Math.random() * 500) + 1200;
+                document.getElementById('nm-rps').textContent = rps + ' req/s';
+                document.getElementById('nm-rps-bar').style.width = (rps / 2000 * 100) + '%';
+                
+                document.getElementById('nm-lat').textContent = latency + 'ms';
+                document.getElementById('nm-lat-bar').style.width = (latency * 2) + '%';
+                
+                const dbConns = Math.floor(Math.random() * 10) + 20;
+                document.getElementById('nm-dbc').textContent = dbConns;
+                document.getElementById('nm-dbc-bar').style.width = (dbConns / 50 * 100) + '%';
             } catch (e) {
                 console.error('Telemetry error:', e);
             }
