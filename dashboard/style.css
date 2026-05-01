@@ -255,6 +255,15 @@ body {
 .event-list .time { color: var(--accent-teal); font-weight: 700; font-size: 0.8rem; }
 .event-list .msg { font-size: 0.9rem; color: #fff; }
 
+.telemetry-chart-container {
+    height: 120px;
+    margin: 1.5rem 0;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
 .stat-item { margin-bottom: 2rem; }
 .stat-info { display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 0.9rem; }
 .progress-bar { height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
@@ -739,4 +748,23 @@ input:checked + .slider:before { transform: translateX(24px); }
 .advanced-group h4 { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
 .input-group { display: flex; gap: 1rem; margin-top: 1rem; }
 .cyber-input { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); padding: 0.8rem 1rem; border-radius: 8px; color: #fff; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.3s; }
-.cyber-input:focus { border-color: var(--accent-teal); box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+/* Chaos Buttons */
+.chaos-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.chaos-btn {
+    flex: 1;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    box-shadow: none;
+}
+
+.chaos-btn:hover {
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}

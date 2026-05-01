@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="cyber-bg"></div>
@@ -130,7 +131,13 @@
                             </div>
                             <div class="progress-bar"><div class="fill" id="latency-fill" style="width: 24%;"></div></div>
                         </div>
-                        <div class="stat-item">
+                        
+                        <!-- NEW: Telemetry Chart -->
+                        <div class="telemetry-chart-container">
+                            <canvas id="telemetryChart"></canvas>
+                        </div>
+
+                        <div class="stat-item" style="margin-top: 1.5rem">
                             <div class="stat-info">
                                 <span>AKS CPU Load</span>
                                 <span class="val" id="cpu-val">24%</span>
@@ -481,6 +488,21 @@
                             </div>
                         </div>
 
+                        <!-- NEW: Chaos Engineering Panel -->
+                        <div class="cyber-card" style="margin-top: 1rem; border-color: var(--danger);">
+                            <div class="icon">🔥</div>
+                            <h3>Chaos Engineering</h3>
+                            <p>Test infrastructure resilience by injecting failures</p>
+                            <div class="chaos-actions">
+                                <button class="action-btn chaos-btn" onclick="injectLatency()">
+                                    Infect Latency (5s)
+                                </button>
+                                <button class="action-btn chaos-btn" onclick="killRandomPod()">
+                                    Kill Random Pod
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Live Traffic View -->
                         <div class="cyber-card" style="margin-top: 1rem">
                             <div class="icon">🌊</div>
@@ -624,6 +646,38 @@
         // --- Real-time Logic via WebSockets ---
         const socket = io();
         
+        // Initialize Chart.js
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        const telemetryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'Network Latency (ms)',
+                    data: Array(20).fill(0),
+                    borderColor: '#06B6D4',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { 
+                        display: true, 
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#94A3B8', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+
         socket.on("clusterData", (data) => {
             updateTetrisMap(data);
             updatePodCounter(data.pods);
@@ -780,6 +834,11 @@
                 document.getElementById('latency-val').textContent = latency + 'ms';
                 document.getElementById('latency-fill').style.width = (latency * 2) + '%';
 
+                // Update Chart
+                telemetryChart.data.datasets[0].data.shift();
+                telemetryChart.data.datasets[0].data.push(latency);
+                telemetryChart.update('none');
+
                 const flows = document.querySelectorAll('.flow-path');
                 const speed = Math.max(0.5, 4 - (latency / 10));
                 flows.forEach(f => f.style.setProperty('--flow-speed', speed + 's'));
@@ -829,7 +888,12 @@
             }
         });
 
-        // Settings Features Logic
+        // --- Command Handlers ---
+        let currentPods = [];
+        socket.on("clusterData", (data) => {
+            currentPods = data.pods.filter(p => p.type === 'app');
+        });
+
         async function triggerScale() {
             const replicas = document.getElementById('scale-input').value;
             writeToTerminal(`Initiating scale operation to ${replicas} replicas...`, 'warn');
@@ -837,11 +901,11 @@
                 const res = await fetch('/api/scale', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ deployment: 'fortress-web', replicas })
+                    body: JSON.stringify({ deployment: 'fortress-dashboard-web', replicas })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    showToast(`Scaled to ${replicas} pods`, 'success');
+                    showToast(`Scaling to ${replicas} pods`, 'success');
                     writeToTerminal(`Scale successful: ${data.message}`, 'success');
                 } else {
                     throw new Error(data.error);
@@ -878,7 +942,36 @@
             }
         }
 
-        // Traffic bars logic merged into socket.on('azureMetrics')
+        function injectLatency() {
+            writeToTerminal('CHAOS EVENT: Injecting 5s latency into backend loop...', 'warn');
+            fetch('/api/chaos/simulate-latency', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ duration: 5000 })
+            })
+            .then(() => {
+                showToast('Latency Injection Complete', 'warn');
+                writeToTerminal('Backend response normalized.', 'success');
+            });
+        }
+
+        function killRandomPod() {
+            if (currentPods.length === 0) return showToast('No app pods found to kill', 'warn');
+            const pod = currentPods[Math.floor(Math.random() * currentPods.length)];
+            writeToTerminal(`CHAOS EVENT: Terminating pod ${pod.name}`, 'danger');
+            fetch('/api/chaos/kill-pod', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ podName: pod.name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Pod ${pod.name} terminated`, 'danger');
+                    writeToTerminal(`Kubernetes self-healing will now spawn a replacement.`, 'info');
+                }
+            });
+        }
     </script>
 </body>
 </html>

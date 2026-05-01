@@ -33,9 +33,9 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "db_subnet_ids" {
-  description = "List of subnet IDs to delegate to the Postgres Flexible Server"
-  type        = list(string)
+variable "delegated_subnet_id" {
+  description = "The ID of the delegated subnet for the Postgres Flexible Server"
+  type        = string
 }
 
 variable "vnet_id" {

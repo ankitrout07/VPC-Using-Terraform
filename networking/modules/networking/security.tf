@@ -148,8 +148,31 @@ locals {
   )
 }
 
+<<<<<<< HEAD
 resource "azurerm_subnet_network_security_group_association" "unified" {
   for_each                  = local.subnets_to_associate
   subnet_id                 = each.value
   network_security_group_id = azurerm_network_security_group.unified_nsg.id
+=======
+# NSG Associations
+resource "azurerm_subnet_network_security_group_association" "app" {
+  count                     = 2
+  subnet_id                 = azurerm_subnet.app[count.index].id
+  network_security_group_id = azurerm_network_security_group.app_nsg.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "db" {
+  subnet_id                 = azurerm_subnet.db_delegated.id
+  network_security_group_id = azurerm_network_security_group.db_nsg.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "gateway" {
+  subnet_id                 = azurerm_subnet.gateway.id
+  network_security_group_id = azurerm_network_security_group.gateway_nsg.id
+>>>>>>> abe2ea3 (Stable Update)
+}
+
+resource "azurerm_subnet_network_security_group_association" "redis" {
+  subnet_id                 = azurerm_subnet.redis.id
+  network_security_group_id = azurerm_network_security_group.db_nsg.id # Reuse DB/Private NSG logic or create specific if needed
 }

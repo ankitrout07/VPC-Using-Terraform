@@ -3,21 +3,42 @@ name: Deploy Infrastructure and App
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'dashboard/**'
+      - 'networking/**'
+      - 'k8s/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 jobs:
-  deploy:
+  terraform:
+    name: Infrastructure (Terraform)
     runs-on: ubuntu-latest
+    outputs:
+      resource_group: ${{ steps.outputs.outputs.RG }}
+      aks_name: ${{ steps.outputs.outputs.AKS }}
+      acr_server: ${{ steps.outputs.outputs.ACR }}
+      appgw_id: ${{ steps.outputs.outputs.APPGW_ID }}
+      aks_id: ${{ steps.outputs.outputs.AKS_ID }}
+      db_id: ${{ steps.outputs.outputs.DB_ID }}
+      db_password: ${{ steps.outputs.outputs.DB_PASSWORD }}
+      db_user: ${{ steps.outputs.outputs.DB_USER }}
+      db_name: ${{ steps.outputs.outputs.DB_NAME }}
+      db_host: ${{ steps.outputs.outputs.DB_HOST }}
+      plan_status: ${{ steps.plan.outputs.plan_status }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+<<<<<<< HEAD
       - name: Start Docker Build in Background
         run: |
           ( docker build -t local/fortress-dashboard:${{ github.sha }} ./dashboard > build.log 2>&1 ; echo $? > build.status ) &
           echo "BUILD_PID=$!" >> $GITHUB_ENV
 
       # Explicit mapping to resolve "Not all values are present" error
+=======
+>>>>>>> abe2ea3 (Stable Update)
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -27,53 +48,60 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
-          # Disable the wrapper so terraform exit codes are not swallowed
-          # and ::debug:: annotations don't corrupt $GITHUB_ENV
           terraform_wrapper: false
 
+      - name: Terraform Plugin Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf*') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
       - name: Terraform Init
+        env:
+          TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
+          mkdir -p ~/.terraform.d/plugin-cache
           terraform init \
             -backend-config="resource_group_name=${{ vars.TF_STATE_RG }}" \
             -backend-config="storage_account_name=${{ vars.TF_STATE_ACCOUNT }}" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=terraform.tfstate"
         working-directory: ./networking
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ./networking
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-      - name: Terraform Plan
-        id: plan
         run: |
           set +e
           terraform plan -detailed-exitcode -out=tfplan
           EXIT_CODE=$?
           set -e
-          # 0 = no changes, 1 = error, 2 = changes present
-          echo "plan_status=${EXIT_CODE}" >> $GITHUB_ENV
-          # Propagate real errors (exit code 1) to fail the step
+          echo "plan_status=${EXIT_CODE}" >> $GITHUB_OUTPUT
           if [ $EXIT_CODE -eq 1 ]; then exit 1; fi
-        working-directory: ./networking
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
       - name: Terraform Apply
-        if: env.plan_status == '2'
-        run: terraform apply -auto-approve tfplan
+        if: steps.plan.outputs.plan_status == '2'
         working-directory: ./networking
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: terraform apply -auto-approve tfplan
 
       - name: Get Terraform Outputs
+        id: outputs
         working-directory: ./networking
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -81,6 +109,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
+<<<<<<< HEAD
           echo "RG=$(terraform output -raw resource_group_name)" >> $GITHUB_ENV
           echo "AKS=$(terraform output -raw aks_cluster_name)" >> $GITHUB_ENV
           echo "ACR=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
@@ -105,9 +134,38 @@ jobs:
           docker tag local/fortress-dashboard:${{ github.sha }} $ACR_NAME/fortress-dashboard:${{ github.sha }}
           az acr login --name $(echo $ACR_NAME | cut -d. -f1)
           docker push $ACR_NAME/fortress-dashboard:${{ github.sha }}
+=======
+          echo "RG=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "AKS=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "ACR=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+          echo "APPGW_ID=$(terraform output -raw appgw_id)" >> $GITHUB_OUTPUT
+          echo "AKS_ID=$(terraform output -raw aks_cluster_id)" >> $GITHUB_OUTPUT
+          echo "DB_ID=$(terraform output -raw db_server_id)" >> $GITHUB_OUTPUT
+          echo "DB_PASSWORD=$(terraform output -raw db_password)" >> $GITHUB_OUTPUT
+          echo "DB_USER=$(terraform output -raw db_username)" >> $GITHUB_OUTPUT
+          echo "DB_NAME=$(terraform output -raw db_name)" >> $GITHUB_OUTPUT
+          echo "DB_HOST=$(terraform output -raw db_server_fqdn)" >> $GITHUB_OUTPUT
 
-      - name: Deploy to AKS
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: terraform
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+>>>>>>> abe2ea3 (Stable Update)
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
         run: |
+<<<<<<< HEAD
           az aks get-credentials --resource-group ${{ env.RG }} --name ${{ env.AKS }} --overwrite-existing
           sed -i 's|image: .*|image: ${{ env.ACR }}/fortress-dashboard:${{ github.sha }}|' k8s/fortress-app.yaml
           sed -i "s|APPGW_ID_PLACEHOLDER|${{ env.APPGW_ID }}|" k8s/fortress-app.yaml
@@ -119,6 +177,48 @@ jobs:
           sed -i "s|DB_NAME_PLACEHOLDER|${{ env.DB_NAME }}|" k8s/fortress-app.yaml
           kubectl apply -f k8s/
           kubectl rollout status deployment/fortress-web --timeout=600s
+=======
+          az acr login --name $(echo ${{ needs.terraform.outputs.acr_server }} | cut -d. -f1)
+
+      - name: Build and Push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./dashboard
+          push: true
+          tags: ${{ needs.terraform.outputs.acr_server }}/fortress-dashboard:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: [terraform, build]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        run: |
+          az aks get-credentials --resource-group ${{ needs.terraform.outputs.resource_group }} --name ${{ needs.terraform.outputs.aks_name }} --overwrite-existing
+
+      - name: Deploy Manifests
+        run: |
+          sed -i 's|image: .*|image: ${{ needs.terraform.outputs.acr_server }}/fortress-dashboard:${{ github.sha }}|' k8s/fortress-app.yaml
+          sed -i "s|APPGW_ID_PLACEHOLDER|${{ needs.terraform.outputs.appgw_id }}|" k8s/fortress-app.yaml
+          sed -i "s|AKS_ID_PLACEHOLDER|${{ needs.terraform.outputs.aks_id }}|" k8s/fortress-app.yaml
+          sed -i "s|DB_ID_PLACEHOLDER|${{ needs.terraform.outputs.db_id }}|" k8s/fortress-app.yaml
+          sed -i "s|PGHOST_PLACEHOLDER|${{ needs.terraform.outputs.db_host }}|" k8s/fortress-app.yaml
+          sed -i "s|PGUSER_PLACEHOLDER|${{ needs.terraform.outputs.db_user }}|" k8s/fortress-app.yaml
+          sed -i "s|PGPASSWORD_PLACEHOLDER|${{ needs.terraform.outputs.db_password }}|" k8s/fortress-app.yaml
+          sed -i "s|PGDATABASE_PLACEHOLDER|${{ needs.terraform.outputs.db_name }}|" k8s/fortress-app.yaml
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/fortress-dashboard-web --timeout=300s
+>>>>>>> abe2ea3 (Stable Update)
 
       - name: Verify Deployment
         run: |

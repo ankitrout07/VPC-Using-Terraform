@@ -27,7 +27,11 @@ resource "azurerm_postgresql_flexible_server" "db" {
   resource_group_name    = var.resource_group_name
   location               = var.location
   version                = "15"
+<<<<<<< HEAD
   delegated_subnet_id    = var.pg_delegated_subnet_id
+=======
+  delegated_subnet_id    = var.delegated_subnet_id
+>>>>>>> abe2ea3 (Stable Update)
   private_dns_zone_id    = azurerm_private_dns_zone.postgres.id
   administrator_login    = var.admin_username
   administrator_password = var.db_password
@@ -38,6 +42,12 @@ resource "azurerm_postgresql_flexible_server" "db" {
   backup_retention_days         = 7
   geo_redundant_backup_enabled  = false
   public_network_access_enabled = false
+
+  maintenance_window {
+    day_of_week  = 0
+    start_hour   = 2
+    start_minute = 0
+  }
 
   lifecycle {
     ignore_changes = [

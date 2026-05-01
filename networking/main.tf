@@ -45,10 +45,16 @@ module "database" {
   db_name             = var.db_name
   admin_username      = var.admin_username
   db_password         = random_password.db_password.result
+<<<<<<< HEAD
   db_subnet_ids          = module.networking.db_subnet_ids
   pg_delegated_subnet_id = module.networking.pg_delegated_subnet_id
   vnet_id                = module.networking.vnet_id
   vnet_name              = module.networking.vnet_name
+=======
+  delegated_subnet_id = module.networking.db_delegated_subnet_id
+  vnet_id             = module.networking.vnet_id
+  vnet_name           = module.networking.vnet_name
+>>>>>>> abe2ea3 (Stable Update)
 }
 
 # ── Application Gateway module ─────────────────────────────────────────────────

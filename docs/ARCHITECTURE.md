@@ -1,17 +1,37 @@
-# Fortress VNet — How It All Works
-When you run `terraform apply`, it creates this on Azure:
+# Fortress Architecture — How It All Works
 
+## Overview
+Fortress is a cloud-native monitoring and management hub deployed on Azure using Terraform. It demonstrates a hardened three-tier architecture with real-time telemetry and self-healing capabilities.
+
+```mermaid
+graph TD
+    User((User)) -->|HTTPS| AppGW[Azure App Gateway / WAF v2]
+    
+    subgraph VNet ["Azure Virtual Network (10.0.0.0/16)"]
+        AppGW -->|Ingress| AKS[AKS Cluster]
+        
+        subgraph AKS_Pods ["AKS Workloads"]
+            Web[Fortress Dashboard Pods]
+        end
+        
+        Web -->|Private Link| PG[(PostgreSQL Flexible)]
+        Web -->|Private Link| Redis{Redis Cache}
+    end
+    
+    subgraph Control_Plane ["Management & Telemetry"]
+        Web -->|List/Watch| K8sAPI[K8s API Server]
+        Web -->|Query| AzMon[Azure Monitor]
+        GHA[GitHub Actions] -->|Deploy| AKS
+    end
+    
+    Web -.->|Socket.io| User
 ```
-Internet
-   ↓
-Application Gateway (WAF-ready)
-   ↓
-Private AKS Cluster (K8s) ↔ Redis Cache (Private)
-   ↓
-Bastion Host (Public Subnet) → Remote Access
-   ↓
-PostgreSQL Database (Isolated)
-```
+
+## Infrastructure Flow
+1. **Internet** → **Application Gateway (WAF-ready)**
+2. **App Gateway** → **Private AKS Cluster (K8s)**
+3. **AKS Pods** ↔ **Redis Cache & PostgreSQL (Private Link)**
+4. **Bastion Host** (Public Subnet) → **Remote Access**
 
 Everything lives inside a single, unified Virtual Network (VNet) and shared Resource Group — providing a private, isolated network on Azure with simplified management.
 

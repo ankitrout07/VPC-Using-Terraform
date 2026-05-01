@@ -12,16 +12,7 @@ resource "azurerm_virtual_network" "main" {
   resource_group_name = azurerm_resource_group.main.name
 }
 
-# --- TIER 1: PUBLIC ---
-resource "azurerm_subnet" "public" {
-  count                = 2
-  name                 = "${var.project_name}-public-subnet-${count.index}"
-  resource_group_name  = azurerm_resource_group.main.name
-  virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, count.index)]
-}
-
-# --- TIER 2: PRIVATE APP ---
+# --- TIER 1: PRIVATE APP ---
 resource "azurerm_subnet" "app" {
   count                = 2
   name                 = "${var.project_name}-app-subnet-${count.index}"
@@ -30,13 +21,28 @@ resource "azurerm_subnet" "app" {
   address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, count.index + 10)]
 }
 
-# --- TIER 3: ISOLATED DB ---
-resource "azurerm_subnet" "db" {
-  count                = 2
-  name                 = "${var.project_name}-db-subnet-${count.index}"
+# --- TIER 2: DELEGATED DB (PostgreSQL Flexible) ---
+resource "azurerm_subnet" "db_delegated" {
+  name                 = "${var.project_name}-db-delegated-subnet"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, count.index + 20)]
+  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 20)] # 10.0.20.0/24
+
+  delegation {
+    name = "postgres-delegation"
+    service_delegation {
+      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
+}
+
+# --- TIER 3: REDIS / PRIVATE SERVICES ---
+resource "azurerm_subnet" "redis" {
+  name                 = "${var.project_name}-redis-subnet"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 30)] # 10.0.30.0/24
 }
 
 # --- TIER 4: GATEWAY ---
@@ -48,12 +54,12 @@ resource "azurerm_subnet" "gateway" {
 }
 
 # --- TIER 5: BASTION ---
-# Must be named exactly 'AzureBastionSubnet'
 resource "azurerm_subnet" "bastion" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [cidrsubnet(var.vnet_address_space, 8, 50)] # 10.0.50.0/24
+<<<<<<< HEAD
 }
 
 # --- TIER 6: REDIS / PRIVATE SERVICES ---
@@ -78,4 +84,6 @@ resource "azurerm_subnet" "postgres_delegated" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
+=======
+>>>>>>> abe2ea3 (Stable Update)
 }

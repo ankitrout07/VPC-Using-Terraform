@@ -105,8 +105,32 @@ resource "kubernetes_deployment" "fortress_web" {
           }
 
           env {
-            name  = "DB_HOST"
+            name  = "PGHOST"
             value = module.database.db_server_fqdn
+          }
+          env {
+            name  = "PGUSER"
+            value = var.admin_username
+          }
+          env {
+            name  = "PGPASSWORD"
+            value = random_password.db_password.result
+          }
+          env {
+            name  = "PGDATABASE"
+            value = var.db_name
+          }
+          env {
+            name  = "PGSSLMODE"
+            value = "require"
+          }
+          env {
+            name  = "APPGW_ID"
+            value = module.app_gateway.appgw_id
+          }
+          env {
+            name  = "DB_ID"
+            value = module.database.db_server_id
           }
           env {
             name  = "REDIS_HOST"

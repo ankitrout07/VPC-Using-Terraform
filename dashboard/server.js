@@ -16,7 +16,12 @@ try {
 }
 
 // Initialize Postgres Pool (will use PGHOST, PGUSER, PGPASSWORD, PGDATABASE env vars)
-const pool = new Pool();
+const pool = new Pool({
+    host: process.env.PGHOST || process.env.DB_HOST,
+    ssl: {
+        rejectUnauthorized: false // Required for Azure Postgres Flexible Server
+    }
+});
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -95,8 +100,28 @@ app.post('/api/db/entry', async (req, res) => {
         res.json({ success: true, data: result.rows[0] });
     } catch (err) {
         console.error('DB error:', err);
-        res.status(500).json({ success: false, error: 'Database connection failed. Ensure PG variables are set.' });
+        res.status(500).json({ success: false, error: `Database connection failed: ${err.message}` });
     }
+});
+
+// --- Chaos Engineering API ---
+app.post('/api/chaos/kill-pod', async (req, res) => {
+    try {
+        const { podName } = req.body;
+        await k8sApi.deleteNamespacedPod(podName, 'default');
+        res.json({ success: true, message: `Terminated pod ${podName}` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/chaos/simulate-latency', (req, res) => {
+    const { duration } = req.body; // in ms
+    const start = Date.now();
+    while (Date.now() - start < duration) {
+        // Blocking loop to simulate CPU load/latency
+    }
+    res.json({ success: true, message: `Injected ${duration}ms latency` });
 });
 
 async function getClusterData() {
