@@ -128,4 +128,11 @@ resource "azurerm_role_assignment" "agic_pip_contributor" {
   principal_id         = module.aks.ingress_identity_id
 }
 
+# 5. Grant Monitoring Reader to AKS Kubelet Identity (for Dashboard real-time metrics)
+resource "azurerm_role_assignment" "aks_monitoring_reader" {
+  scope                = module.networking.resource_group_id
+  role_definition_name = "Monitoring Reader"
+  principal_id         = module.aks.kubelet_identity_id
+}
+
 

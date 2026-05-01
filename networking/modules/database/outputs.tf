@@ -14,3 +14,8 @@ output "db_name" {
   description = "Name of the PostgreSQL database"
   value       = azurerm_postgresql_flexible_server_database.main.name
 }
+
+output "db_server_id" {
+  description = "ID of the PostgreSQL Flexible Server"
+  value       = azurerm_postgresql_flexible_server.db.id
+}

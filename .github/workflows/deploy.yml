@@ -84,6 +84,9 @@ jobs:
           echo "RG=$(terraform output -raw resource_group_name)" >> $GITHUB_ENV
           echo "AKS=$(terraform output -raw aks_cluster_name)" >> $GITHUB_ENV
           echo "ACR=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
+          echo "APPGW_ID=$(terraform output -raw appgw_id)" >> $GITHUB_ENV
+          echo "AKS_ID=$(terraform output -raw aks_cluster_id)" >> $GITHUB_ENV
+          echo "DB_ID=$(terraform output -raw db_server_id)" >> $GITHUB_ENV
 
       - name: Wait for Docker Build and Push
         run: |
@@ -103,6 +106,9 @@ jobs:
         run: |
           az aks get-credentials --resource-group ${{ env.RG }} --name ${{ env.AKS }} --overwrite-existing
           sed -i 's|image: .*|image: ${{ env.ACR }}/fortress-dashboard:${{ github.sha }}|' k8s/fortress-app.yaml
+          sed -i "s|APPGW_ID_PLACEHOLDER|${{ env.APPGW_ID }}|" k8s/fortress-app.yaml
+          sed -i "s|AKS_ID_PLACEHOLDER|${{ env.AKS_ID }}|" k8s/fortress-app.yaml
+          sed -i "s|DB_ID_PLACEHOLDER|${{ env.DB_ID }}|" k8s/fortress-app.yaml
           kubectl apply -f k8s/
           kubectl rollout status deployment/fortress-web --timeout=300s
 

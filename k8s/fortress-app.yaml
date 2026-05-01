@@ -48,6 +48,13 @@ spec:
           image: fortressvnetdevb0d6a535acru9s3l6.azurecr.io/fortress-dashboard:latest
           ports:
             - containerPort: 3000
+          env:
+            - name: APPGW_ID
+              value: "APPGW_ID_PLACEHOLDER"
+            - name: AKS_ID
+              value: "AKS_ID_PLACEHOLDER"
+            - name: DB_ID
+              value: "DB_ID_PLACEHOLDER"
           resources:
             requests:
               cpu: "100m"

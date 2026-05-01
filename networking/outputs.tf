@@ -43,3 +43,18 @@ output "resource_group_name" {
   description = "The main resource group name"
   value       = module.networking.resource_group_name
 }
+
+output "appgw_id" {
+  description = "ID of the Application Gateway"
+  value       = module.app_gateway.appgw_id
+}
+
+output "aks_cluster_id" {
+  description = "ID of the Azure Kubernetes Service cluster"
+  value       = module.aks.cluster_id
+}
+
+output "db_server_id" {
+  description = "ID of the PostgreSQL Flexible Server"
+  value       = module.database.db_server_id
+}

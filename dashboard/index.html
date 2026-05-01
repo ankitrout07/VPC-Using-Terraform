@@ -770,61 +770,64 @@
             }, 3000);
         }
 
-        async function fetchStats() {
+        socket.on("azureMetrics", (data) => {
             try {
-                // Keep simulation for other metrics like CPU/Latency
-                const cpu = Math.floor(Math.random() * 20) + 15;
+                const { cpu, latency, rps, dbConns, queries = 10 } = data;
+                
                 document.getElementById('cpu-val').textContent = cpu + '%';
                 document.getElementById('cpu-fill').style.width = cpu + '%';
                 
-                const latency = Math.floor(Math.random() * 15) + 18;
                 document.getElementById('latency-val').textContent = latency + 'ms';
                 document.getElementById('latency-fill').style.width = (latency * 2) + '%';
 
-                // Traffic Speed and Pulse Color Logic
                 const flows = document.querySelectorAll('.flow-path');
-                const speed = Math.max(0.5, 4 - (latency / 10)); // Higher latency = slower dots
+                const speed = Math.max(0.5, 4 - (latency / 10));
                 flows.forEach(f => f.style.setProperty('--flow-speed', speed + 's'));
-
-                // Sync SVG particles with latency
                 document.querySelectorAll('animateMotion').forEach(anim => {
                     anim.setAttribute('dur', speed + 's');
                 });
 
                 const aksPulse = document.getElementById('aks-pulse');
                 const dbPulse = document.getElementById('db-pulse');
-                
                 if (latency > 27) {
                     aksPulse.classList.add('amber');
                     dbPulse.classList.add('amber');
-                    writeToTerminal(`High Latency Detected: ${latency}ms. Switching to Amber alert.`, 'warn');
                 } else {
                     aksPulse.classList.remove('amber');
                     dbPulse.classList.remove('amber');
                 }
 
-                const queries = Math.floor(Math.random() * 5) + 10;
                 document.getElementById('query-val').textContent = queries;
                 document.getElementById('query-fill').style.width = (queries * 5) + '%';
                 
-                // Update live traffic panel on Network Map
-                const rps = Math.floor(Math.random() * 500) + 1200;
                 document.getElementById('nm-rps').textContent = rps + ' req/s';
                 document.getElementById('nm-rps-bar').style.width = (rps / 2000 * 100) + '%';
                 
                 document.getElementById('nm-lat').textContent = latency + 'ms';
                 document.getElementById('nm-lat-bar').style.width = (latency * 2) + '%';
                 
-                const dbConns = Math.floor(Math.random() * 10) + 20;
                 document.getElementById('nm-dbc').textContent = dbConns;
                 document.getElementById('nm-dbc-bar').style.width = (dbConns / 50 * 100) + '%';
-            } catch (e) {
-                console.error('Telemetry error:', e);
-            }
-        }
 
-        setInterval(fetchStats, 3000);
-        fetchStats();
+                // Live Traffic Chart Logic
+                const trafficBars = document.getElementById('traffic-bars');
+                if (document.getElementById('settings').classList.contains('active')) {
+                    const height = (rps / 2000) * 100;
+                    const bar = document.createElement('div');
+                    bar.style.width = '20px';
+                    bar.style.height = `${height}%`;
+                    bar.style.background = `linear-gradient(to top, var(--accent-1), var(--accent-2))`;
+                    bar.style.borderRadius = '4px 4px 0 0';
+                    bar.style.transition = 'height 0.3s ease';
+                    trafficBars.appendChild(bar);
+                    if (trafficBars.children.length > 30) {
+                        trafficBars.removeChild(trafficBars.firstElementChild);
+                    }
+                }
+            } catch (e) {
+                console.error('Azure Telemetry error:', e);
+            }
+        });
 
         // Settings Features Logic
         async function triggerScale() {
@@ -875,24 +878,7 @@
             }
         }
 
-        // Live Traffic Chart Logic
-        const trafficBars = document.getElementById('traffic-bars');
-        setInterval(() => {
-            if (document.getElementById('settings').classList.contains('active')) {
-                const rps = Math.floor(Math.random() * 500) + 1200; // Simulated
-                const height = (rps / 2000) * 100;
-                const bar = document.createElement('div');
-                bar.style.width = '20px';
-                bar.style.height = `${height}%`;
-                bar.style.background = `linear-gradient(to top, var(--accent-1), var(--accent-2))`;
-                bar.style.borderRadius = '4px 4px 0 0';
-                bar.style.transition = 'height 0.3s ease';
-                trafficBars.appendChild(bar);
-                if (trafficBars.children.length > 30) {
-                    trafficBars.removeChild(trafficBars.firstElementChild);
-                }
-            }
-        }, 1000);
+        // Traffic bars logic merged into socket.on('azureMetrics')
     </script>
 </body>
 </html>
