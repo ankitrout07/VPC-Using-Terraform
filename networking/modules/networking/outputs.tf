@@ -13,16 +13,19 @@ output "vnet_id" {
 output "public_subnet_ids" {
   description = "IDs of the public (Tier 1) subnets"
   value       = azurerm_subnet.public[*].id
+  depends_on  = [azurerm_subnet_network_security_group_association.public]
 }
 
 output "app_subnet_ids" {
   description = "IDs of the private app (Tier 2) subnets"
   value       = azurerm_subnet.app[*].id
+  depends_on  = [azurerm_subnet_network_security_group_association.app]
 }
 
 output "db_subnet_ids" {
   description = "IDs of the isolated DB (Tier 3) subnets"
   value       = azurerm_subnet.db[*].id
+  depends_on  = [azurerm_subnet_network_security_group_association.db]
 }
 
 
@@ -45,6 +48,7 @@ output "resource_group_id" {
 output "gateway_subnet_id" {
   description = "ID of the gateway subnet"
   value       = azurerm_subnet.gateway.id
+  depends_on  = [azurerm_subnet_network_security_group_association.gateway]
 }
 
 output "bastion_subnet_id" {

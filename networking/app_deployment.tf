@@ -168,13 +168,13 @@ resource "kubernetes_ingress_v1" "fortress_ingress" {
     name      = "fortress-ingress"
     namespace = "default"
     annotations = {
-      "appgw.ingress.kubernetes.io/backend-path-prefix"   = "/"
-      "appgw.ingress.kubernetes.io/health-probe-path"     = "/health"
-      "appgw.ingress.kubernetes.io/success-codes"         = "200-399"
-      "appgw.ingress.kubernetes.io/use-private-ip"        = "false"
-      "appgw.ingress.kubernetes.io/backend-protocol"      = "http"
+      "appgw.ingress.kubernetes.io/backend-path-prefix"    = "/"
+      "appgw.ingress.kubernetes.io/health-probe-path"      = "/health"
+      "appgw.ingress.kubernetes.io/success-codes"          = "200-399"
+      "appgw.ingress.kubernetes.io/use-private-ip"         = "false"
+      "appgw.ingress.kubernetes.io/backend-protocol"       = "http"
       "appgw.ingress.kubernetes.io/override-frontend-port" = "80"
-      "appgw.ingress.kubernetes.io/backend-hostname"      = "fortress.local"
+      "appgw.ingress.kubernetes.io/backend-hostname"       = "fortress.local"
     }
   }
 

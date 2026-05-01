@@ -49,7 +49,7 @@ jobs:
         id: plan
         run: |
           set +e
-          terraform plan -detailed-exitcode -out=tfplan
+          terraform plan -parallelism=1 -detailed-exitcode -out=tfplan
           EXIT_CODE=$?
           set -e
           # 0 = no changes, 1 = error, 2 = changes present
@@ -65,7 +65,7 @@ jobs:
 
       - name: Terraform Apply
         if: env.plan_status == '2'
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -parallelism=1 -auto-approve tfplan
         working-directory: ./networking
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

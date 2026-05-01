@@ -24,7 +24,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     enable_auto_scaling = true
     min_count           = var.min_count
     max_count           = var.max_count
-    
+
     # Required for small clusters to fit in quota
     os_disk_size_gb = 32
     type            = "VirtualMachineScaleSets"

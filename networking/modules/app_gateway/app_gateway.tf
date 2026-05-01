@@ -58,9 +58,9 @@ resource "azurerm_application_gateway" "main" {
   }
 
   backend_http_settings {
-    name                  = local.http_setting_name
-    cookie_based_affinity = "Disabled"
-    path                  = "/"
+    name                                = local.http_setting_name
+    cookie_based_affinity               = "Disabled"
+    path                                = "/"
     port                                = 3000
     protocol                            = "Http"
     request_timeout                     = 60
@@ -69,12 +69,12 @@ resource "azurerm_application_gateway" "main" {
   }
 
   probe {
-    name                                = "fortress-health-probe"
-    protocol                            = "Http"
-    path                                = "/health"
-    interval                            = 30
-    timeout                             = 30
-    unhealthy_threshold                 = 3
+    name                                      = "fortress-health-probe"
+    protocol                                  = "Http"
+    path                                      = "/health"
+    interval                                  = 30
+    timeout                                   = 30
+    unhealthy_threshold                       = 3
     pick_host_name_from_backend_http_settings = true
   }
 

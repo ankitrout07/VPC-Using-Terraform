@@ -4,24 +4,24 @@
 module "networking" {
   source = "./modules/networking"
 
-  project_name       = var.project_name
+  project_name        = var.project_name
   resource_group_name = var.resource_group_name
-  location           = var.location
-  vnet_address_space = var.vnet_address_space
-  ssh_allowed_source = var.ssh_allowed_source
+  location            = var.location
+  vnet_address_space  = var.vnet_address_space
+  ssh_allowed_source  = var.ssh_allowed_source
 }
 
 # ── AKS module ──────────────────────────────────────────────────
 module "aks" {
   source = "./modules/aks"
 
-  project_name        = var.project_name
-  location            = var.location
-  resource_group_name = module.networking.resource_group_name
-  node_vm_size        = var.vm_size
-  vnet_subnet_id      = module.networking.app_subnet_ids[0]
-  gateway_id          = module.app_gateway.appgw_id
-  gateway_subnet_id   = module.networking.gateway_subnet_id
+  project_name         = var.project_name
+  location             = var.location
+  resource_group_name  = module.networking.resource_group_name
+  node_vm_size         = var.vm_size
+  vnet_subnet_id       = module.networking.app_subnet_ids[0]
+  gateway_id           = module.app_gateway.appgw_id
+  gateway_subnet_id    = module.networking.gateway_subnet_id
   min_count            = var.min_count
   max_count            = var.max_count
   authorized_ip_ranges = var.aks_authorized_ip_ranges

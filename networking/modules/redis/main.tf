@@ -1,14 +1,14 @@
 # modules/redis/main.tf
 
 resource "azurerm_redis_cache" "redis" {
-  name                = "${var.project_name}-redis"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  capacity            = 1
-  family              = "C"
-  sku_name            = "Standard"
+  name                 = "${var.project_name}-redis"
+  location             = var.location
+  resource_group_name  = var.resource_group_name
+  capacity             = 1
+  family               = "C"
+  sku_name             = "Standard"
   non_ssl_port_enabled = false
-  minimum_tls_version = "1.2"
+  minimum_tls_version  = "1.2"
 
   redis_configuration {
   }

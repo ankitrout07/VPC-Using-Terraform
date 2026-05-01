@@ -190,15 +190,18 @@ resource "azurerm_subnet_network_security_group_association" "app" {
   count                     = 2
   subnet_id                 = azurerm_subnet.app[count.index].id
   network_security_group_id = azurerm_network_security_group.app_nsg.id
+  depends_on                = [azurerm_subnet_network_security_group_association.public]
 }
 
 resource "azurerm_subnet_network_security_group_association" "db" {
   count                     = 2
   subnet_id                 = azurerm_subnet.db[count.index].id
   network_security_group_id = azurerm_network_security_group.db_nsg.id
+  depends_on                = [azurerm_subnet_network_security_group_association.app]
 }
 
 resource "azurerm_subnet_network_security_group_association" "gateway" {
   subnet_id                 = azurerm_subnet.gateway.id
   network_security_group_id = azurerm_network_security_group.gateway_nsg.id
+  depends_on                = [azurerm_subnet_network_security_group_association.db]
 }

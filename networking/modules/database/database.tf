@@ -49,11 +49,11 @@ resource "azurerm_postgresql_flexible_server" "db" {
   administrator_login    = var.admin_username
   administrator_password = var.db_password
 
-  storage_mb   = 32768
-  sku_name     = "B_Standard_B1ms" # Cost-efficient: 1 vCore, 2GB RAM
+  storage_mb = 32768
+  sku_name   = "B_Standard_B1ms" # Cost-efficient: 1 vCore, 2GB RAM
 
-  backup_retention_days        = 7
-  geo_redundant_backup_enabled = false
+  backup_retention_days         = 7
+  geo_redundant_backup_enabled  = false
   public_network_access_enabled = false
 
   lifecycle {
