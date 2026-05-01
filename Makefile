@@ -32,8 +32,24 @@ docker-build:
 	az acr login --name $$ACR_NAME; \
 	docker build -t $$ACR/fortress-dashboard:v4-cyber ./dashboard; \
 	docker push $$ACR/fortress-dashboard:v4-cyber; \
-	echo "==> Updating image URL in K8s manifest..."; \
-	sed -i "s|image: .*fortress-dashboard:.*|image: $$ACR/fortress-dashboard:v4-cyber|g" $(K8S_DIR)/fortress-app.yaml
+	echo "==> Updating image and placeholders in K8s manifest..."; \
+	DB_HOST=$$(cd $(TF_DIR) && terraform output -raw db_server_fqdn); \
+	DB_USER=$$(cd $(TF_DIR) && terraform output -raw db_username); \
+	DB_PASS=$$(cd $(TF_DIR) && terraform output -raw db_password); \
+	DB_NAME=$$(cd $(TF_DIR) && terraform output -raw db_name); \
+	DB_ID=$$(cd $(TF_DIR) && terraform output -raw db_server_id); \
+	AKS_ID=$$(cd $(TF_DIR) && terraform output -raw aks_cluster_id); \
+	APPGW_ID=$$(cd $(TF_DIR) && terraform output -raw appgw_id); \
+	sed -e "s|image: .*fortress-dashboard:.*|image: $$ACR/fortress-dashboard:v4-cyber|g" \
+	    -e "s|PGHOST_PLACEHOLDER|$$DB_HOST|g" \
+	    -e "s|PGUSER_PLACEHOLDER|$$DB_USER|g" \
+	    -e "s|PGPASSWORD_PLACEHOLDER|$$DB_PASS|g" \
+	    -e "s|PGDATABASE_PLACEHOLDER|$$DB_NAME|g" \
+	    -e "s|DB_ID_PLACEHOLDER|$$DB_ID|g" \
+	    -e "s|AKS_ID_PLACEHOLDER|$$AKS_ID|g" \
+	    -e "s|APPGW_ID_PLACEHOLDER|$$APPGW_ID|g" \
+	    $(K8S_DIR)/fortress-app.yaml > $(K8S_DIR)/fortress-app.yaml.tmp && \
+	mv $(K8S_DIR)/fortress-app.yaml.tmp $(K8S_DIR)/fortress-app.yaml
 
 # 5. Deploy Soft Infrastructure (Kubernetes)
 k8s-deploy:

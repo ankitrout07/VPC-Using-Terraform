@@ -15,12 +15,29 @@ try {
     console.warn("Azure Identity not configured, real-time Azure metrics will be disabled.");
 }
 
-// Initialize Postgres Pool (will use PGHOST, PGUSER, PGPASSWORD, PGDATABASE env vars)
-const pool = new Pool({
+// Validate Environment Variables
+const dbConfig = {
     host: process.env.PGHOST || process.env.DB_HOST,
-    ssl: {
-        rejectUnauthorized: false // Required for Azure Postgres Flexible Server
-    }
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE,
+    port: process.env.PGPORT || 5432,
+    ssl: { rejectUnauthorized: false }
+};
+
+// Check for placeholders
+const placeholders = Object.entries(dbConfig).filter(([k, v]) => typeof v === 'string' && v.includes('_PLACEHOLDER'));
+if (placeholders.length > 0) {
+    console.error(`[DB-CONFIG-ERROR] Detected unconfigured placeholders: ${placeholders.map(([k]) => k).join(', ')}`);
+    console.error(`[DB-CONFIG-ERROR] Please ensure the deployment process has replaced these values.`);
+}
+
+// Initialize Postgres Pool
+const pool = new Pool(dbConfig);
+
+// Test connection and log (masked)
+pool.on('error', (err) => {
+    console.error('[POSTGRES-POOL-ERROR]', err.message);
 });
 const app = express();
 const server = http.createServer(app);

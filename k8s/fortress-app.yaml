@@ -49,6 +49,7 @@ spec:
           ports:
             - containerPort: 3000
           env:
+            # NOTE: The following placeholders are replaced during deployment (see Makefile or deploy.yml)
             - name: PGHOST
               value: "PGHOST_PLACEHOLDER"
             - name: PGUSER
