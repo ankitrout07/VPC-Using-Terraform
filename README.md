@@ -147,4 +147,3 @@ The dashboard is a full-stack Node.js application that provides real-time infras
 
 ---
 
-Built with ❤️ for Azure Architects.
